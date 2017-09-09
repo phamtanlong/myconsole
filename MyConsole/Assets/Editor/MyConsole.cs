@@ -99,8 +99,10 @@ public class MyConsole : EditorWindow
 		Repaint();
 
 		if (logAsset.errorPause && type == LogType.Exception || type == LogType.Assert) {
-			Debug.DebugBreak();
-			Debug.Break();
+			if (EditorApplication.isPlaying) {
+				Debug.DebugBreak();
+				Debug.Break();
+			}
 		}
 	}
 
