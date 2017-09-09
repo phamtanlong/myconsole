@@ -303,16 +303,6 @@ public class MyConsole : EditorWindow
 
 			GUILayout.BeginHorizontal();
 
-			bool hasVerticalScrollBar = arr.Length * LogHeight > currentScrollViewHeight - ToolbarHeight - ToolbarSpaceScrollView;
-
-			if (logAsset.collapse) {
-				styleLog.fixedWidth = position.width - 22 - (hasVerticalScrollBar ? 15 : 0);
-			} else {
-				styleLog.fixedWidth = position.width;
-			}
-
-			bool clicked = GUILayout.Button(content, styleLog);
-
 			if (logAsset.collapse) {
 				GUIStyle styleNumber = new GUIStyle(GUI.skin.box);
 				styleNumber.normal.background = MakeTex(2, 2, new Color(1, 1, 1, 0));
@@ -322,6 +312,8 @@ public class MyConsole : EditorWindow
 				styleNumber.alignment = TextAnchor.MiddleLeft;
 				GUILayout.Box("123", styleNumber, GUILayout.Width(22), GUILayout.Height(LogHeight));
 			}
+
+			bool clicked = GUILayout.Button(content, styleLog);
 
 			GUILayout.EndHorizontal();
 
