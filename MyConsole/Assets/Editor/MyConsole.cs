@@ -45,14 +45,17 @@ public class MyConsole : EditorWindow
 	}
 
 	void OnProjectChange () {
+		RegisterHandlers();
 		Repaint();
 	}
 
 	void OnFocus () {
+		RegisterHandlers();
 		Repaint();
 	}
 
 	void OnLostFocus () {
+		RegisterHandlers();
 		Repaint();
 	}
 
@@ -82,10 +85,17 @@ public class MyConsole : EditorWindow
 		return asset;
 	}
 
+	void RegisterHandlers () {
+		Application.logMessageReceived -= LogHandler;
+		Application.logMessageReceived += LogHandler;
+
+		EditorApplication.playmodeStateChanged -= PlayModeChange;
+		EditorApplication.playmodeStateChanged += PlayModeChange;
+	}
+
 	void Init () {
 		LoadOrCreateAsset();
-		Application.logMessageReceived += LogHandler;
-		EditorApplication.playmodeStateChanged += PlayModeChange;
+		RegisterHandlers();
 		isInited = true;
 	}
 
@@ -109,10 +119,11 @@ public class MyConsole : EditorWindow
 
 	void PlayModeChange()
 	{
-//		if (EditorApplication.isPlayingOrWillChangePlaymode) {
-//			//EditorUtility.DisplayDialog("clear", "clear", "ok");
-//			logAsset.logs.Clear();
-//		}
+		if (EditorApplication.isPlayingOrWillChangePlaymode) {
+			if (!EditorApplication.isPlaying) {
+				logAsset.logs.Clear();
+			}
+		}
 	}
 
 	void DoubleClickLog(ConsoleAsset.Log log)
