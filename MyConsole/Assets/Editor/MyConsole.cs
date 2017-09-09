@@ -33,6 +33,7 @@ public class MyConsole : EditorWindow
 	#region Lifecycle
 
 	void Awake () {
+		currentScrollViewHeight = position.height / 2;
 		ClearData();
 		Init();
 	}
@@ -100,7 +101,6 @@ public class MyConsole : EditorWindow
 
 	#region Draw
 
-	Vector2 scrollList;
 	Vector2 scrollDetail;
 	int selectedLog = 0;
 
@@ -108,6 +108,9 @@ public class MyConsole : EditorWindow
 
 	void OnGUI()
 	{
+		DrawToolbar();
+		GUILayout.Space(ToolbarSpaceScrollView);
+
 		visiableLogs = new List<ConsoleAsset.Log>();
 		foreach (var log in logAsset.logs) {
 			if ((log.type == LogType.Log && logAsset.showLog)
@@ -118,14 +121,23 @@ public class MyConsole : EditorWindow
 			}
 		}
 
-		DrawToolbar();
-		GUILayout.Space(2);
-		DrawLogList(visiableLogs);
-		DrawDetail(visiableLogs);
+		GUILayout.BeginVertical();
+		{
+			DrawLogList(visiableLogs);
+
+			ResizeScrollView();
+
+			//GUILayout.FlexibleSpace();
+			GUILayout.Space(ToolbarSpaceScrollView);
+
+			DrawDetail(visiableLogs);
+		}
+		GUILayout.EndVertical();
+		Repaint();
 	}
 
 	void DrawToolbar () {
-		GUI.Box(new Rect(0, 0, position.width, 22), string.Empty);
+		GUI.Box(new Rect(0, 0, position.width, ToolbarHeight), string.Empty);
 		GUILayout.BeginHorizontal();
 		{
 			if (GUILayout.Button("Clear", opts)) {
@@ -144,17 +156,17 @@ public class MyConsole : EditorWindow
 
 			GUIStyle styleLog = new GUIStyle(GUI.skin.button);
 			styleLog.normal.textColor = Color.black;
-			styleLog.fixedWidth = 35;
+			styleLog.fixedWidth = ToolbarButtonWidth;
 			logAsset.showLog = GUILayout.Toggle(logAsset.showLog, logcontent, styleLog);
 
 			GUIStyle styleWarn = new GUIStyle(GUI.skin.button);
 			styleWarn.normal.textColor = new Color32(201, 97, 0, 255);
-			styleWarn.fixedWidth = 35;
+			styleWarn.fixedWidth = ToolbarButtonWidth;
 			logAsset.showWarn = GUILayout.Toggle(logAsset.showWarn, warncontent, styleWarn);
 
 			GUIStyle styleError = new GUIStyle(GUI.skin.button);
 			styleError.normal.textColor = Color.red;
-			styleError.fixedWidth = 35;
+			styleError.fixedWidth = ToolbarButtonWidth;
 			logAsset.showError = GUILayout.Toggle(logAsset.showError, errorcontent, styleError);
 		}
 		GUILayout.EndHorizontal();
@@ -165,7 +177,7 @@ public class MyConsole : EditorWindow
 
 		GUIStyle styleLog = new GUIStyle(GUI.skin.button);
 		styleLog.alignment = TextAnchor.UpperLeft;
-		styleLog.fixedHeight = 33;
+		styleLog.fixedHeight = LogHeight;
 		styleLog.fixedWidth = position.width;
 		styleLog.padding = new RectOffset(10, 0, 3, 3);
 		styleLog.margin = new RectOffset(0, 0, 0, 0);
@@ -178,7 +190,8 @@ public class MyConsole : EditorWindow
 
 		styleLog.wordWrap = false;
 
-		scrollList = GUILayout.BeginScrollView(scrollList, GUIStyle.none, GUI.skin.verticalScrollbar, GUILayout.Width(position.width), GUILayout.Height(position.height - 300));
+		scrollPos = GUILayout.BeginScrollView(scrollPos, GUIStyle.none, GUI.skin.verticalScrollbar, 
+			GUILayout.Width(position.width), GUILayout.Height(currentScrollViewHeight - ToolbarHeight - ToolbarSpaceScrollView));
 		for (int i = 0; i < arr.Length; ++i) {
 			
 			if (list[i].selected) {
@@ -226,12 +239,14 @@ public class MyConsole : EditorWindow
 		if (log != null)
 			detail = "[" + log.type + "] " + log.condition + "\n" + log.stackTrace + "\n";
 
-		scrollDetail = GUILayout.BeginScrollView(scrollDetail, GUILayout.Width(position.width), GUILayout.Height(300 - 5));
-		GUIStyle style = new GUIStyle(GUI.skin.box);
+		float fixedHeight = position.height - currentScrollViewHeight;
+		scrollDetail = GUILayout.BeginScrollView(scrollDetail, false, false, GUIStyle.none, GUI.skin.verticalScrollbar, GUILayout.Width(position.width), GUILayout.Height(fixedHeight));
+		GUIStyle style = new GUIStyle(GUI.skin.label);
 		style.focused = GUI.skin.box.focused;
-		style.fixedWidth = position.width;
+		style.fixedWidth = position.width - 5;
 		style.alignment = TextAnchor.UpperLeft;
-		style.fixedHeight = 300 - 5;
+		//style.fixedHeight = fixedHeight - ToolbarSpaceScrollView;
+		style.wordWrap = true;
 		GUILayout.TextArea(detail, style);
 		GUILayout.EndScrollView();
 	}
@@ -251,4 +266,51 @@ public class MyConsole : EditorWindow
 
 	#endregion //Draw
 
+	#region Resizable
+
+	Vector2 scrollPos = Vector2.zero;
+	float currentScrollViewHeight;
+	bool resize = false;
+	Rect cursorChangeRect;
+
+	void ResizeScrollView(){
+		cursorChangeRect = new Rect(0, currentScrollViewHeight, this.position.width, SplitHeight);
+
+		GUI.DrawTexture(cursorChangeRect, EditorGUIUtility.whiteTexture);
+
+		EditorGUIUtility.AddCursorRect(cursorChangeRect, MouseCursor.ResizeVertical);
+
+		if (Event.current.type == EventType.mouseDown && cursorChangeRect.Contains(Event.current.mousePosition)) {
+			resize = true;
+		}
+
+		if (resize) {
+			currentScrollViewHeight = Event.current.mousePosition.y;
+			cursorChangeRect.Set(cursorChangeRect.x, currentScrollViewHeight, cursorChangeRect.width, cursorChangeRect.height);
+		}
+
+		if (Event.current.type == EventType.MouseUp) {
+			resize = false;
+		}
+
+		if (currentScrollViewHeight < ToolbarHeight + MinScrollHeight)
+			currentScrollViewHeight = ToolbarHeight + MinScrollHeight;
+		
+		if (position.height - currentScrollViewHeight < MinDetailHeight)
+			currentScrollViewHeight = position.height - MinDetailHeight;
+	}
+
+	#endregion
+
+	#region Constants
+
+	const float ToolbarButtonWidth = 35;
+	const float LogHeight = 33;
+	const float ToolbarSpaceScrollView = 2;
+	const float SplitHeight = 2;
+	const float ToolbarHeight = 22;
+	const float MinScrollHeight = 70;
+	const float MinDetailHeight = 80;
+
+	#endregion //Constants
 }
