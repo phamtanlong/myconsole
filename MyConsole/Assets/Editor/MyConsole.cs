@@ -159,13 +159,28 @@ public class MyConsole : EditorWindow
 		DrawToolbar();
 		GUILayout.Space(ToolbarSpaceScrollView);
 
+		Dictionary<string, ConsoleAsset.Log> countCollapse = new Dictionary<string, ConsoleAsset.Log>();
+
 		visiableLogs = new List<ConsoleAsset.Log>();
 		foreach (var log in logAsset.logs) {
+			log.number = 1;
+
 			if ((log.type == LogType.Log && logAsset.showLog)
 				|| (log.type == LogType.Warning && logAsset.showWarn)
 				|| (log.type != LogType.Log && log.type != LogType.Warning && logAsset.showError)) {
 
-				visiableLogs.Add(log);
+				if (logAsset.collapse) {
+					string key = log.condition + log.stackTrace;
+					ConsoleAsset.Log lastLog;
+					if (countCollapse.TryGetValue(key, out lastLog)) {
+						lastLog.number++;
+					} else {
+						countCollapse.Add(key, log);
+						visiableLogs.Add(log);
+					}
+				} else {
+					visiableLogs.Add(log);
+				}
 			}
 		}
 
@@ -307,10 +322,10 @@ public class MyConsole : EditorWindow
 				GUIStyle styleNumber = new GUIStyle(GUI.skin.box);
 				styleNumber.normal.background = MakeTex(2, 2, new Color(1, 1, 1, 0));
 				styleNumber.normal.textColor = Color.blue;
-				styleNumber.margin = new RectOffset(-2, 0, 0, 0);
-				styleNumber.padding = new RectOffset(0, 0, 0, 0);
-				styleNumber.alignment = TextAnchor.MiddleLeft;
-				GUILayout.Box("123", styleNumber, GUILayout.Width(22), GUILayout.Height(LogHeight));
+				styleNumber.margin = new RectOffset(0, 0, 0, 0);
+				styleNumber.padding = new RectOffset(3, 3, 0, 0);
+				styleNumber.alignment = TextAnchor.MiddleCenter;
+				GUILayout.Box(list[i].number.ToString(), styleNumber, GUILayout.Width(22), GUILayout.Height(LogHeight));
 			}
 
 			bool clicked = GUILayout.Button(content, styleLog);

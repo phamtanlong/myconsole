@@ -9,6 +9,7 @@ public class ConsoleAsset : ScriptableObject {
 
 	[System.Serializable]
 	public class Log {
+		public int number;
 		public bool selected;
 		public string condition;
 		public string stackTrace;
