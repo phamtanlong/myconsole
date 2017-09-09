@@ -248,7 +248,6 @@ public class MyConsole : EditorWindow
 			if (lastSearchKey != keySearch) {
 				if (keySearch.EndsWith("\n")) {
 					keySearch = keySearch.TrimEnd('\n');
-					GUI.FocusControl("MyScrollView");
 				}
 			}
 
@@ -316,7 +315,6 @@ public class MyConsole : EditorWindow
 	void DrawLogList (List<ConsoleAsset.Log> list) {
 		var arr = list.Select(x => LogToString(x)).ToArray();
 
-		GUI.SetNextControlName("MyScrollView");
 		scrollPos = GUILayout.BeginScrollView(scrollPos, GUIStyle.none, GUI.skin.verticalScrollbar, 
 			GUILayout.Width(position.width), GUILayout.Height(currentScrollViewHeight - ToolbarHeight - ToolbarSpaceScrollView));
 		for (int i = 0; i < arr.Length; ++i) {
@@ -365,7 +363,7 @@ public class MyConsole : EditorWindow
 
 			if (clicked) {
 
-				GUI.FocusControl("MyScrollView");
+				GUI.FocusControl("balah"); //do not focus on search text field
 
 				float deltaTime = Time.realtimeSinceStartup - lastClickInLog;
 				if (deltaTime < DoubleClickTime && list[i].selected) {
@@ -426,6 +424,8 @@ public class MyConsole : EditorWindow
 		}
 
 		GUILayout.EndScrollView();
+
+
 	}
 
 	float lastClickInTrace = 0;
