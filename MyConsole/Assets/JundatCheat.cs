@@ -7,6 +7,8 @@ public class JundatCheat : MonoBehaviour {
 
 	[MenuItem("Jundat/All Log")]
 	public static void AllLog () {
+		log2();
+		log1();
 		Log();
 		Warning();
 		Error();
@@ -24,7 +26,7 @@ public class JundatCheat : MonoBehaviour {
 	} 
 
 	public static void log2 () {
-		Debug.Log("\nAlog <color=red>RED</color>\nThis is a log");
+		Debug.Log("\nAlog <color=red>RED</color>\nThis is a log " + (int)Time.realtimeSinceStartup);
 	}
 
 	[MenuItem("Jundat/Warning")]
