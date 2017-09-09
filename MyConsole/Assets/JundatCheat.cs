@@ -16,6 +16,14 @@ public class JundatCheat : MonoBehaviour {
 
 	[MenuItem("Jundat/Log")]
 	public static void Log () {
+		log1();
+	}
+
+	public static void log1 () {
+		log2();
+	} 
+
+	public static void log2 () {
 		Debug.Log("Alog\nThis is a log");
 	}
 

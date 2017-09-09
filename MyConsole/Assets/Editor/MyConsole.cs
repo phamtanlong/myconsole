@@ -2,6 +2,7 @@
 using UnityEditor;
 using System.Collections.Generic;
 using System.Linq;
+using System.IO;
 
 public class MyConsole : EditorWindow
 {
@@ -97,6 +98,21 @@ public class MyConsole : EditorWindow
 		Repaint();
 	}
 
+	void DoubleClickLog(ConsoleAsset.Log log)
+	{
+		var str = log.stackTrace.Trim();
+		var index = str.IndexOf(") (at Assets/");
+		str = str.Substring(index + 6);
+		index = str.IndexOf(")");
+		str = str.Substring(0, index);
+		index = str.LastIndexOf(".cs:");
+		str = str.Substring(0, index + 3);
+		str = str.Replace("Assets/", string.Empty);
+		Debug.Log(str);
+
+		EditorUtility.OpenWithDefaultApp(Path.Combine(Application.dataPath, str));
+	}
+
 	#endregion //Process
 
 	#region Draw
@@ -167,6 +183,8 @@ public class MyConsole : EditorWindow
 		GUILayout.EndHorizontal();
 	}
 
+	float lastClickInLog = 0;
+
 	void DrawLogList (List<ConsoleAsset.Log> list) {
 		var arr = list.Select(x => x.condition + "\n" + x.stackTrace).ToArray();
 
@@ -191,8 +209,14 @@ public class MyConsole : EditorWindow
 			EditorGUI.BeginChangeCheck();
 			GUILayout.Toggle(list[i].selected, arr[i], styleLog); //list[i].selected
 			bool changed = EditorGUI.EndChangeCheck();
-			if (changed)
+			if (changed) {
+				float deltaTime = Time.realtimeSinceStartup - lastClickInLog;
+				if (deltaTime < DoubleClickTime && list[i].selected) {
+					DoubleClickLog(list[i]);
+				}
 				list[i].selected = true;
+				lastClickInLog = Time.realtimeSinceStartup;
+			}
 
 			if (list[i].selected) {
 				selectedLog = i;
@@ -217,7 +241,7 @@ public class MyConsole : EditorWindow
 		}
 
 		if (log != null)
-			detail = "[" + log.type + "] " + log.condition + "\n" + log.stackTrace + "\n";
+			detail = log.condition + "\n" + log.stackTrace + "\n"; //"[" + log.type + "] " + 
 
 		float fixedHeight = position.height - currentScrollViewHeight;
 		scrollDetail = GUILayout.BeginScrollView(scrollDetail, false, false, GUIStyle.none, GUI.skin.verticalScrollbar, GUILayout.Width(position.width), GUILayout.Height(fixedHeight));
@@ -284,6 +308,7 @@ public class MyConsole : EditorWindow
 
 	#region Constants
 
+	const float DoubleClickTime = 0.3f;
 	const float ToolbarButtonWidth = 35;
 	const float LogHeight = 33;
 	const float ToolbarSpaceScrollView = 2;
