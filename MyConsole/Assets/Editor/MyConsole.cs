@@ -106,11 +106,14 @@ public class MyConsole : EditorWindow
 		index = str.IndexOf(")");
 		str = str.Substring(0, index);
 		index = str.LastIndexOf(".cs:");
-		str = str.Substring(0, index + 3);
-		str = str.Replace("Assets/", string.Empty);
-		Debug.Log(str);
 
-		EditorUtility.OpenWithDefaultApp(Path.Combine(Application.dataPath, str));
+		string line = str.Substring(index + 4);
+		int lineNumber = int.Parse(line);
+
+		str = str.Substring(0, index + 3);
+
+		Object obj = AssetDatabase.LoadAssetAtPath<Object>(str);
+		AssetDatabase.OpenAsset(obj, lineNumber);
 	}
 
 	#endregion //Process
