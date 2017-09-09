@@ -24,7 +24,7 @@ public class JundatCheat : MonoBehaviour {
 	} 
 
 	public static void log2 () {
-		Debug.Log("Alog\nThis is a log");
+		Debug.Log("\nAlog <color=red>RED</color>\nThis is a log");
 	}
 
 	[MenuItem("Jundat/Warning")]

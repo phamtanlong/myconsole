@@ -85,6 +85,7 @@ public class MyConsole : EditorWindow
 	void Init () {
 		LoadOrCreateAsset();
 		Application.logMessageReceived += LogHandler;
+		EditorApplication.playmodeStateChanged += PlayModeChange;
 		isInited = true;
 	}
 
@@ -100,6 +101,14 @@ public class MyConsole : EditorWindow
 		if (logAsset.errorPause && type == LogType.Exception || type == LogType.Assert) {
 			Debug.DebugBreak();
 			Debug.Break();
+		}
+	}
+
+	void PlayModeChange()
+	{
+		if (EditorApplication.isPlayingOrWillChangePlaymode) {
+			//EditorUtility.DisplayDialog("clear", "clear", "ok");
+			logAsset.logs.Clear();
 		}
 	}
 
@@ -177,7 +186,8 @@ public class MyConsole : EditorWindow
 				logAsset.logs.Clear();
 			}
 
-			GUILayout.Label(mylog);
+			//GUILayout.Label(mylog);
+			GUILayout.Toggle(isInited, "Inited");
 			GUILayout.FlexibleSpace();
 
 			logAsset.collapse = GUILayout.Toggle(logAsset.collapse, "Collapse", styleToolbarButton);
@@ -238,7 +248,7 @@ public class MyConsole : EditorWindow
 	float lastClickInLog = 0;
 
 	void DrawLogList (List<ConsoleAsset.Log> list) {
-		var arr = list.Select(x => x.condition + "\n" + x.stackTrace).ToArray();
+		var arr = list.Select(x => LogToString(x)).ToArray();
 
 		scrollPos = GUILayout.BeginScrollView(scrollPos, GUIStyle.none, GUI.skin.verticalScrollbar, 
 			GUILayout.Width(position.width), GUILayout.Height(currentScrollViewHeight - ToolbarHeight - ToolbarSpaceScrollView));
@@ -259,8 +269,18 @@ public class MyConsole : EditorWindow
 			}
 
 			GUIContent logContent = new GUIContent(arr[i], logIcon);
+			GUIContent warnContent = new GUIContent(arr[i], warnIcon);
+			GUIContent errorContent = new GUIContent(arr[i], errorIcon);
+			GUIContent content = null;
+			if (list[i].type == LogType.Log) {
+				content = logContent;
+			} else if (list[i].type == LogType.Warning) {
+				content = warnContent;
+			} else {
+				content = errorContent;
+			}
 
-			bool clicked = GUILayout.Button(logContent, styleLog);
+			bool clicked = GUILayout.Button(content, styleLog);
 
 			if (clicked) {
 				float deltaTime = Time.realtimeSinceStartup - lastClickInLog;
@@ -298,14 +318,20 @@ public class MyConsole : EditorWindow
 
 		float fixedHeight = position.height - currentScrollViewHeight;
 		scrollDetail = GUILayout.BeginScrollView(scrollDetail, false, false, GUIStyle.none, GUI.skin.verticalScrollbar, GUILayout.Width(position.width), GUILayout.Height(fixedHeight));
-		GUIStyle style = new GUIStyle(GUI.skin.label);
-		style.focused = GUI.skin.box.focused;
-		style.fixedWidth = position.width - 5;
-		style.alignment = TextAnchor.UpperLeft;
-		//style.fixedHeight = fixedHeight - ToolbarSpaceScrollView;
-		style.wordWrap = true;
-		GUILayout.TextArea(detail, style);
+
+		GUILayout.TextArea(detail, styleDetail);
 		GUILayout.EndScrollView();
+	}
+
+	string LogToString (ConsoleAsset.Log log) {
+		string str = log.condition + "\n" + log.stackTrace;
+		//str = str.Trim();
+		string[] strs = str.Split('\n');
+		str = SpaceBeforeText + strs[0];
+		if (strs.Length > 1)
+			str += "\n" + SpaceBeforeText + strs[1];
+
+		return str;
 	}
 
 	private Texture2D MakeTex( int width, int height, Color col )
@@ -361,6 +387,7 @@ public class MyConsole : EditorWindow
 
 	#region Constants
 
+	const string SpaceBeforeText = "  ";
 	const int ToolbarFontSize = 9;
 	const float DoubleClickTime = 0.3f;
 	const float ToolbarButtonWidth = 35;
@@ -405,6 +432,21 @@ public class MyConsole : EditorWindow
 		}
 	}
 
+	GUIStyle _styleDetail;
+	public GUIStyle styleDetail {
+		get {
+			if (_styleDetail == null) {
+				_styleDetail = new GUIStyle(GUI.skin.label);
+				_styleDetail.focused = GUI.skin.box.focused;
+				_styleDetail.fixedWidth = position.width - 5;
+				_styleDetail.alignment = TextAnchor.UpperLeft;
+				_styleDetail.wordWrap = true;
+				_styleDetail.richText = true;
+			}
+			return _styleDetail;
+		}
+	}
+
 	GUIStyle _styleLog;
 	public GUIStyle styleLog {
 		get {
@@ -413,8 +455,9 @@ public class MyConsole : EditorWindow
 				_styleLog = new GUIStyle(GUI.skin.button);
 				_styleLog.alignment = TextAnchor.UpperLeft;
 				_styleLog.fixedHeight = LogHeight;
-				_styleLog.padding = new RectOffset(10, 0, 3, 3);
+				_styleLog.padding = new RectOffset(5, 0, 3, 3);
 				_styleLog.margin = new RectOffset(0, 0, 0, 0);
+				_styleLog.richText = true;
 
 				_styleLog.active.textColor = Color.white;
 				_styleLog.active.background = MakeTex(2, 2, new Color32(61, 128, 223, 255));
