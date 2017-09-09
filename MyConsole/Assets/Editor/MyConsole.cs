@@ -184,6 +184,31 @@ public class MyConsole : EditorWindow
 			logAsset.showError = GUILayout.Toggle(logAsset.showError, errorcontent, styleErrorButton);
 		}
 		GUILayout.EndHorizontal();
+		CheckInput();
+	}
+
+	void CheckInput () {
+		if (selectedLog >= 0) {
+			if (Event.current != null && Event.current.isKey && Event.current.type == EventType.KeyDown) {
+				if (Event.current.keyCode == KeyCode.UpArrow) {
+					if (selectedLog > 0) {
+						visiableLogs[selectedLog].selected = false;
+						selectedLog = selectedLog - 1;
+						visiableLogs[selectedLog].selected = true;
+						Repaint();
+					}
+				}
+
+				if (Event.current.keyCode == KeyCode.DownArrow) {
+					if (selectedLog < visiableLogs.Count - 1) {
+						visiableLogs[selectedLog].selected = false;
+						selectedLog = selectedLog + 1;
+						visiableLogs[selectedLog].selected = true;
+						Repaint();
+					}
+				}
+			}
+		}
 	}
 
 	float lastClickInLog = 0;
@@ -209,10 +234,11 @@ public class MyConsole : EditorWindow
 					styleLog.normal.background = texLogWhite;
 			}
 
-			EditorGUI.BeginChangeCheck();
-			GUILayout.Toggle(list[i].selected, arr[i], styleLog); //list[i].selected
-			bool changed = EditorGUI.EndChangeCheck();
-			if (changed) {
+			GUIContent logContent = new GUIContent(arr[i], logIcon);
+
+			bool clicked = GUILayout.Button(logContent, styleLog);
+
+			if (clicked) {
 				float deltaTime = Time.realtimeSinceStartup - lastClickInLog;
 				if (deltaTime < DoubleClickTime && list[i].selected) {
 					DoubleClickLog(list[i]);
