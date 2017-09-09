@@ -96,6 +96,11 @@ public class MyConsole : EditorWindow
 			type = type
 		});
 		Repaint();
+
+		if (logAsset.errorPause && type == LogType.Exception || type == LogType.Assert) {
+			Debug.DebugBreak();
+			Debug.Break();
+		}
 	}
 
 	void DoubleClickLog(ConsoleAsset.Log log)
