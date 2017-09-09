@@ -127,7 +127,6 @@ public class MyConsole : EditorWindow
 
 			ResizeScrollView();
 
-			//GUILayout.FlexibleSpace();
 			GUILayout.Space(ToolbarSpaceScrollView);
 
 			DrawDetail(visiableLogs);
@@ -144,30 +143,26 @@ public class MyConsole : EditorWindow
 				logAsset.logs.Clear();
 			}
 
-			Texture logIcon = Resources.Load("log") as Texture;
-			Texture warnIcon = Resources.Load("warn") as Texture;
-			Texture errorIcon = Resources.Load("error") as Texture;
-
 			GUILayout.FlexibleSpace();
 
 			GUIContent logcontent = new GUIContent("" + logAsset.logs.Count(x => x.type == LogType.Log), logIcon);
 			GUIContent warncontent = new GUIContent("" + logAsset.logs.Count(x => x.type == LogType.Warning), warnIcon);
 			GUIContent errorcontent = new GUIContent("" + logAsset.logs.Count(x => x.type != LogType.Log && x.type != LogType.Warning), errorIcon);
 
-			GUIStyle styleLog = new GUIStyle(GUI.skin.button);
-			styleLog.normal.textColor = Color.black;
-			styleLog.fixedWidth = ToolbarButtonWidth;
-			logAsset.showLog = GUILayout.Toggle(logAsset.showLog, logcontent, styleLog);
+			GUIStyle styleLogButton = new GUIStyle(GUI.skin.button);
+			styleLogButton.normal.textColor = Color.black;
+			styleLogButton.fixedWidth = ToolbarButtonWidth;
+			logAsset.showLog = GUILayout.Toggle(logAsset.showLog, logcontent, styleLogButton);
 
-			GUIStyle styleWarn = new GUIStyle(GUI.skin.button);
-			styleWarn.normal.textColor = new Color32(201, 97, 0, 255);
-			styleWarn.fixedWidth = ToolbarButtonWidth;
-			logAsset.showWarn = GUILayout.Toggle(logAsset.showWarn, warncontent, styleWarn);
+			GUIStyle styleWarnButton = new GUIStyle(GUI.skin.button);
+			styleWarnButton.normal.textColor = new Color32(201, 97, 0, 255);
+			styleWarnButton.fixedWidth = ToolbarButtonWidth;
+			logAsset.showWarn = GUILayout.Toggle(logAsset.showWarn, warncontent, styleWarnButton);
 
-			GUIStyle styleError = new GUIStyle(GUI.skin.button);
-			styleError.normal.textColor = Color.red;
-			styleError.fixedWidth = ToolbarButtonWidth;
-			logAsset.showError = GUILayout.Toggle(logAsset.showError, errorcontent, styleError);
+			GUIStyle styleErrorButton = new GUIStyle(GUI.skin.button);
+			styleErrorButton.normal.textColor = Color.red;
+			styleErrorButton.fixedWidth = ToolbarButtonWidth;
+			logAsset.showError = GUILayout.Toggle(logAsset.showError, errorcontent, styleErrorButton);
 		}
 		GUILayout.EndHorizontal();
 	}
@@ -175,37 +170,22 @@ public class MyConsole : EditorWindow
 	void DrawLogList (List<ConsoleAsset.Log> list) {
 		var arr = list.Select(x => x.condition + "\n" + x.stackTrace).ToArray();
 
-		GUIStyle styleLog = new GUIStyle(GUI.skin.button);
-		styleLog.alignment = TextAnchor.UpperLeft;
-		styleLog.fixedHeight = LogHeight;
-		styleLog.fixedWidth = position.width;
-		styleLog.padding = new RectOffset(10, 0, 3, 3);
-		styleLog.margin = new RectOffset(0, 0, 0, 0);
-
-		styleLog.active.textColor = Color.white;
-		styleLog.active.background = MakeTex(2, 2, new Color32(61, 128, 223, 255));
-
-		styleLog.onActive.textColor = Color.white;
-		styleLog.onActive.background = MakeTex(2, 2, new Color32(61, 128, 223, 255));
-
-		styleLog.wordWrap = false;
-
 		scrollPos = GUILayout.BeginScrollView(scrollPos, GUIStyle.none, GUI.skin.verticalScrollbar, 
 			GUILayout.Width(position.width), GUILayout.Height(currentScrollViewHeight - ToolbarHeight - ToolbarSpaceScrollView));
 		for (int i = 0; i < arr.Length; ++i) {
 			
 			if (list[i].selected) {
 				styleLog.normal.textColor = Color.white;
-				styleLog.normal.background = MakeTex(2, 2, new Color32(61, 128, 223, 255));
+				styleLog.normal.background = texLogActive;
 
 				styleLog.onNormal.textColor = Color.white;
-				styleLog.onNormal.background = MakeTex(2, 2, new Color32(61, 128, 223, 255));
+				styleLog.onNormal.background = texLogActive;
 			} else {
 				styleLog.normal.textColor = Color.black;
 				if (i % 2 == 0)
-					styleLog.normal.background = MakeTex(2, 2, new Color32(216, 216, 216, 255));
+					styleLog.normal.background = texLogBlack;
 				else
-					styleLog.normal.background = MakeTex(2, 2, new Color32(200, 200, 200, 255));
+					styleLog.normal.background = texLogWhite;
 			}
 
 			EditorGUI.BeginChangeCheck();
@@ -313,4 +293,90 @@ public class MyConsole : EditorWindow
 	const float MinDetailHeight = 80;
 
 	#endregion //Constants
+
+	#region Resources Cache
+
+	Texture _logIcon;
+	public Texture logIcon {
+		get {
+			if (_logIcon == null) {
+				_logIcon = Resources.Load("log") as Texture;
+			}
+			return _logIcon;
+		}
+	}
+
+	Texture _warnIcon;
+	public Texture warnIcon {
+		get {
+			if (_warnIcon == null) {
+				_warnIcon = Resources.Load("warn") as Texture;
+			}
+			return _warnIcon;
+		}
+	}
+
+	Texture _errorIcon;
+	public Texture errorIcon {
+		get {
+			if (_errorIcon == null) {
+				_errorIcon = Resources.Load("error") as Texture;
+			}
+			return _errorIcon;
+		}
+	}
+
+	GUIStyle _styleLog;
+	public GUIStyle styleLog {
+		get {
+			if (_styleLog == null) {
+
+				_styleLog = new GUIStyle(GUI.skin.button);
+				_styleLog.alignment = TextAnchor.UpperLeft;
+				_styleLog.fixedHeight = LogHeight;
+				_styleLog.padding = new RectOffset(10, 0, 3, 3);
+				_styleLog.margin = new RectOffset(0, 0, 0, 0);
+
+				_styleLog.active.textColor = Color.white;
+				_styleLog.active.background = MakeTex(2, 2, new Color32(61, 128, 223, 255));
+
+				_styleLog.onActive.textColor = Color.white;
+				_styleLog.onActive.background = MakeTex(2, 2, new Color32(61, 128, 223, 255));
+
+				_styleLog.wordWrap = false;
+			}
+			return _styleLog;
+		}
+	}
+
+	Texture2D _texLogActive;
+	public Texture2D texLogActive {
+		get {
+			if (_texLogActive == null) {
+				_texLogActive = MakeTex(2, 2, new Color32(61, 128, 223, 255));
+			}
+			return _texLogActive;
+		}
+	}
+
+	Texture2D _texLogBlack;
+	public Texture2D texLogBlack {
+		get {
+			if (_texLogBlack == null) {
+				_texLogBlack = MakeTex(2, 2, new Color32(216, 216, 216, 255));
+			}
+			return _texLogBlack;
+		}
+	}
+
+	Texture2D _texLogWhite;
+	public Texture2D texLogWhite {
+		get {
+			if (_texLogWhite == null) {
+				_texLogWhite = MakeTex(2, 2, new Color32(200, 200, 200, 255));
+			}
+			return _texLogWhite;
+		}
+	}
+	#endregion
 }
