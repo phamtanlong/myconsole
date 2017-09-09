@@ -159,31 +159,42 @@ public class MyConsole : EditorWindow
 		GUI.Box(new Rect(0, 0, position.width, ToolbarHeight), string.Empty);
 		GUILayout.BeginHorizontal();
 		{
-			if (GUILayout.Button("Clear", opts)) {
+			RectOffset margin = new RectOffset(0, 0, 0, 0);
+
+			GUIStyle styleToolbarButton = new GUIStyle(GUI.skin.button);
+			styleToolbarButton.normal.textColor = Color.black;
+			styleToolbarButton.fontSize = ToolbarFontSize;
+			styleToolbarButton.margin = margin;
+			styleToolbarButton.fixedHeight = ToolbarHeight;
+
+			GUILayout.Space(5);
+			if (GUILayout.Button("Clear", styleToolbarButton)) {
 				logAsset.logs.Clear();
 			}
 
 			GUILayout.Label(mylog);
 			GUILayout.FlexibleSpace();
 
+			logAsset.collapse = GUILayout.Toggle(logAsset.collapse, "Collapse", styleToolbarButton);
+
+			logAsset.clearOnPlay = GUILayout.Toggle(logAsset.clearOnPlay, "Clear On Play", styleToolbarButton);
+
+			logAsset.errorPause = GUILayout.Toggle(logAsset.errorPause, "Error Pause", styleToolbarButton);
+
+			GUILayout.Space(5);
+
 			GUIContent logcontent = new GUIContent("" + logAsset.logs.Count(x => x.type == LogType.Log), logIcon);
 			GUIContent warncontent = new GUIContent("" + logAsset.logs.Count(x => x.type == LogType.Warning), warnIcon);
 			GUIContent errorcontent = new GUIContent("" + logAsset.logs.Count(x => x.type != LogType.Log && x.type != LogType.Warning), errorIcon);
 
-			GUIStyle styleLogButton = new GUIStyle(GUI.skin.button);
-			styleLogButton.normal.textColor = Color.black;
-			styleLogButton.fixedWidth = ToolbarButtonWidth;
-			logAsset.showLog = GUILayout.Toggle(logAsset.showLog, logcontent, styleLogButton);
+			styleToolbarButton.padding = new RectOffset(2, 5, 0, 0);
+			styleToolbarButton.fixedWidth = ToolbarButtonWidth;
 
-			GUIStyle styleWarnButton = new GUIStyle(GUI.skin.button);
-			styleWarnButton.normal.textColor = new Color32(201, 97, 0, 255);
-			styleWarnButton.fixedWidth = ToolbarButtonWidth;
-			logAsset.showWarn = GUILayout.Toggle(logAsset.showWarn, warncontent, styleWarnButton);
+			logAsset.showLog = GUILayout.Toggle(logAsset.showLog, logcontent, styleToolbarButton);
 
-			GUIStyle styleErrorButton = new GUIStyle(GUI.skin.button);
-			styleErrorButton.normal.textColor = Color.red;
-			styleErrorButton.fixedWidth = ToolbarButtonWidth;
-			logAsset.showError = GUILayout.Toggle(logAsset.showError, errorcontent, styleErrorButton);
+			logAsset.showWarn = GUILayout.Toggle(logAsset.showWarn, warncontent, styleToolbarButton);
+
+			logAsset.showError = GUILayout.Toggle(logAsset.showError, errorcontent, styleToolbarButton);
 		}
 		GUILayout.EndHorizontal();
 		CheckInput();
@@ -345,12 +356,13 @@ public class MyConsole : EditorWindow
 
 	#region Constants
 
+	const int ToolbarFontSize = 9;
 	const float DoubleClickTime = 0.3f;
 	const float ToolbarButtonWidth = 35;
 	const float LogHeight = 33;
 	const float ToolbarSpaceScrollView = 2;
 	const float SplitHeight = 2;
-	const float ToolbarHeight = 22;
+	const float ToolbarHeight = 17;
 	const float MinScrollHeight = 70;
 	const float MinDetailHeight = 80;
 
