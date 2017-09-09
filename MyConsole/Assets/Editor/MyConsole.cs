@@ -100,18 +100,19 @@ public class MyConsole : EditorWindow
 
 		if (logAsset.errorPause && type == LogType.Exception || type == LogType.Assert) {
 			if (EditorApplication.isPlaying) {
-				Debug.DebugBreak();
-				Debug.Break();
+				needPause = true;
 			}
 		}
 	}
 
+	bool needPause = false;
+
 	void PlayModeChange()
 	{
-		if (EditorApplication.isPlayingOrWillChangePlaymode) {
-			//EditorUtility.DisplayDialog("clear", "clear", "ok");
-			logAsset.logs.Clear();
-		}
+//		if (EditorApplication.isPlayingOrWillChangePlaymode) {
+//			//EditorUtility.DisplayDialog("clear", "clear", "ok");
+//			logAsset.logs.Clear();
+//		}
 	}
 
 	void DoubleClickLog(ConsoleAsset.Log log)
@@ -169,6 +170,13 @@ public class MyConsole : EditorWindow
 		}
 		GUILayout.EndVertical();
 		Repaint();
+
+		//need pause
+		if (needPause) {
+			Debug.DebugBreak();
+			Debug.Break();
+			needPause = false;
+		}
 	}
 
 	void DrawToolbar () {
