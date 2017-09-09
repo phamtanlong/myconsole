@@ -122,6 +122,7 @@ public class MyConsole : EditorWindow
 
 	Vector2 scrollDetail;
 	int selectedLog = 0;
+	string mylog = string.Empty;
 
 	List<ConsoleAsset.Log> visiableLogs = new List<ConsoleAsset.Log>();
 
@@ -162,6 +163,7 @@ public class MyConsole : EditorWindow
 				logAsset.logs.Clear();
 			}
 
+			GUILayout.Label(mylog);
 			GUILayout.FlexibleSpace();
 
 			GUIContent logcontent = new GUIContent("" + logAsset.logs.Count(x => x.type == LogType.Log), logIcon);
@@ -190,12 +192,13 @@ public class MyConsole : EditorWindow
 	void CheckInput () {
 		if (selectedLog >= 0) {
 			if (Event.current != null && Event.current.isKey && Event.current.type == EventType.KeyDown) {
+				bool changed = false;
 				if (Event.current.keyCode == KeyCode.UpArrow) {
 					if (selectedLog > 0) {
 						visiableLogs[selectedLog].selected = false;
 						selectedLog = selectedLog - 1;
 						visiableLogs[selectedLog].selected = true;
-						Repaint();
+						changed = true;
 					}
 				}
 
@@ -204,8 +207,13 @@ public class MyConsole : EditorWindow
 						visiableLogs[selectedLog].selected = false;
 						selectedLog = selectedLog + 1;
 						visiableLogs[selectedLog].selected = true;
-						Repaint();
+						changed = true;
 					}
+				}
+
+				if (changed) {
+					scrollPos.y = selectedLog * LogHeight;
+					mylog = scrollPos.x + ", " + scrollPos.y;
 				}
 			}
 		}
