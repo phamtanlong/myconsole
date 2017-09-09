@@ -406,26 +406,62 @@ public class MyConsole : EditorWindow
 				selectedTraceLine = 0;
 			}
 
-			EditorGUI.BeginChangeCheck();
-			var lastSelectedTraceLine = selectedTraceLine;
-			selectedTraceLine = GUILayout.SelectionGrid(selectedTraceLine, lines, 1, styleDetail);
-			bool changed = EditorGUI.EndChangeCheck();
+			for (int i = 0; i < lines.Length; i++) {
+				
+				if (i == selectedTraceLine) {
+					styleDetail.normal.textColor = Color.white;
+					styleDetail.normal.background = texLogActive;
 
-			if (changed) {
-				if (lastSelectedTraceLine == selectedTraceLine) {
-					if (Time.realtimeSinceStartup - lastClickInTrace < DoubleClickTime) {
-						CallStack callStack = LineToCallStack(lines[selectedTraceLine]);
-						OpenCallStack(callStack);
-					}
+					styleDetail.onNormal.textColor = Color.white;
+					styleDetail.onNormal.background = texLogActive;
+				} else {
+					styleDetail.normal.textColor = Color.black;
+					if (i % 2 == 0)
+						styleDetail.normal.background = texLogBlack;
+					else
+						styleDetail.normal.background = texLogWhite;
 				}
 
-				lastClickInTrace = Time.realtimeSinceStartup;
+				bool clicked = GUILayout.Button(lines[i], styleDetail);
+
+				if (clicked) {
+					CallStack callStack = LineToCallStack(lines[i]);
+
+					float deltaTime = Time.realtimeSinceStartup - lastClickInTrace;
+					if (deltaTime < DoubleClickTime && i == selectedTraceLine) {
+						OpenCallStack(callStack);
+					}
+
+					selectedTraceLine = i;
+					lastClickInTrace = Time.realtimeSinceStartup;
+
+					//draw detail in file
+					DrawDetailLine(callStack);
+				}
+
+				if (clicked) {
+					selectedTraceLine = i;
+				}
 			}
 		}
 
 		GUILayout.EndScrollView();
+	}
 
+	void DrawDetailLine (CallStack callStack) {
+		if (callStack != null) {
+			string path = Path.Combine(Application.dataPath, callStack.path.Replace("Assets/", string.Empty));
+			string[] lines = File.ReadAllLines(path);
+			int beginLine = callStack.lineNumber - 3 > 0 ? callStack.lineNumber - 3 : 0;
+			int endLine = callStack.lineNumber + 3 < lines.Length - 1 ? callStack.lineNumber + 3 : lines.Length - 1;
 
+			string content = string.Empty;
+			for (int i = beginLine; i < endLine; i++) {
+				content += lines[i] + "\n";
+			}
+
+			GUILayout.Box(content, GUILayout.Width(position.width), GUILayout.Height(100));
+		}
 	}
 
 	float lastClickInTrace = 0;
