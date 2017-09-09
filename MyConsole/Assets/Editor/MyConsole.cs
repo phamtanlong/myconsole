@@ -3,9 +3,16 @@ using UnityEditor;
 using System.Collections.Generic;
 using System.Linq;
 using System.IO;
+using System;
+using Object = UnityEngine.Object;
 
 public class MyConsole : EditorWindow
 {
+	public class CallStack {
+		public string path;
+		public int lineNumber;
+	}
+
 	[MenuItem("Tools/My Console")]
 	static void ShowMe()
 	{
@@ -46,17 +53,17 @@ public class MyConsole : EditorWindow
 
 	void OnProjectChange () {
 		RegisterHandlers();
-		Repaint();
+		//Repaint();
 	}
 
 	void OnFocus () {
 		RegisterHandlers();
-		Repaint();
+		//Repaint();
 	}
 
 	void OnLostFocus () {
 		RegisterHandlers();
-		Repaint();
+		//Repaint();
 	}
 
 	void Update () {
@@ -106,7 +113,7 @@ public class MyConsole : EditorWindow
 			stackTrace = stackTrace,
 			type = type
 		});
-		Repaint();
+		//Repaint();
 
 		if (logAsset.errorPause && type == LogType.Exception || type == LogType.Assert) {
 			if (EditorApplication.isPlaying) {
@@ -128,26 +135,27 @@ public class MyConsole : EditorWindow
 
 	void DoubleClickLog(ConsoleAsset.Log log)
 	{
-		var str = log.stackTrace.Trim();
-		var index = str.IndexOf(") (at Assets/");
-		str = str.Substring(index + 6);
-		index = str.IndexOf(")");
-		str = str.Substring(0, index);
-		index = str.LastIndexOf(".cs:");
+		string[] lines = log.stackTrace.Split('\n');
+		if (lines.Length >= 2) {
+			string secondLine = lines[1];
 
-		string line = str.Substring(index + 4);
-		int lineNumber = int.Parse(line);
+			CallStack callStack = LineToCallStack(secondLine);
+			OpenCallStack(callStack);
+		}
+	}
 
-		str = str.Substring(0, index + 3);
-
-		Object obj = AssetDatabase.LoadAssetAtPath<Object>(str);
-		AssetDatabase.OpenAsset(obj, lineNumber);
+	void OpenCallStack (CallStack callStack) {
+		if (callStack != null) {
+			Object obj = AssetDatabase.LoadAssetAtPath<Object>(callStack.path);
+			AssetDatabase.OpenAsset(obj, callStack.lineNumber);
+		}
 	}
 
 	#endregion //Process
 
 	#region Draw
 
+	string keySearch = string.Empty;
 	Vector2 scrollDetail;
 	int selectedLog = 0;
 	string mylog = string.Empty;
@@ -161,6 +169,9 @@ public class MyConsole : EditorWindow
 
 		Dictionary<string, ConsoleAsset.Log> countCollapse = new Dictionary<string, ConsoleAsset.Log>();
 
+		bool isSearching = !string.IsNullOrEmpty(keySearch);
+		string keySearchLower = keySearch.ToLower();
+
 		visiableLogs = new List<ConsoleAsset.Log>();
 		foreach (var log in logAsset.logs) {
 			log.number = 1;
@@ -168,6 +179,14 @@ public class MyConsole : EditorWindow
 			if ((log.type == LogType.Log && logAsset.showLog)
 				|| (log.type == LogType.Warning && logAsset.showWarn)
 				|| (log.type != LogType.Log && log.type != LogType.Warning && logAsset.showError)) {
+
+				if (isSearching) {
+					if (!log.condition.ToLower().Contains(keySearchLower)
+						&& 
+						!log.stackTrace.ToLower().Contains(keySearchLower)) {
+						continue;
+					}
+				}
 
 				if (logAsset.collapse) {
 					string key = log.condition + log.stackTrace;
@@ -222,8 +241,19 @@ public class MyConsole : EditorWindow
 				logAsset.logs.Clear();
 			}
 
+			//search
+			var lastSearchKey = keySearch;
+			keySearch = GUILayout.TextField(keySearch, GUILayout.Width(100));
+
+			if (lastSearchKey != keySearch) {
+				if (keySearch.EndsWith("\n")) {
+					keySearch = keySearch.TrimEnd('\n');
+					GUI.FocusControl("MyScrollView");
+				}
+			}
+
 			//GUILayout.Label(mylog);
-			GUILayout.Toggle(isInited, "Inited");
+			//GUILayout.Toggle(isInited, "Inited");
 			GUILayout.FlexibleSpace();
 
 			logAsset.collapse = GUILayout.Toggle(logAsset.collapse, "Collapse", styleToolbarButton);
@@ -286,6 +316,7 @@ public class MyConsole : EditorWindow
 	void DrawLogList (List<ConsoleAsset.Log> list) {
 		var arr = list.Select(x => LogToString(x)).ToArray();
 
+		GUI.SetNextControlName("MyScrollView");
 		scrollPos = GUILayout.BeginScrollView(scrollPos, GUIStyle.none, GUI.skin.verticalScrollbar, 
 			GUILayout.Width(position.width), GUILayout.Height(currentScrollViewHeight - ToolbarHeight - ToolbarSpaceScrollView));
 		for (int i = 0; i < arr.Length; ++i) {
@@ -333,6 +364,9 @@ public class MyConsole : EditorWindow
 			GUILayout.EndHorizontal();
 
 			if (clicked) {
+
+				GUI.FocusControl("MyScrollView");
+
 				float deltaTime = Time.realtimeSinceStartup - lastClickInLog;
 				if (deltaTime < DoubleClickTime && list[i].selected) {
 					DoubleClickLog(list[i]);
@@ -352,7 +386,6 @@ public class MyConsole : EditorWindow
 	}
 
 	void DrawDetail (List<ConsoleAsset.Log> list) {
-		string detail = string.Empty;
 		ConsoleAsset.Log log = null;
 
 		if (selectedLog >= 0 && selectedLog < list.Count) {
@@ -363,15 +396,40 @@ public class MyConsole : EditorWindow
 			}
 		}
 
-		if (log != null)
-			detail = log.condition + "\n" + log.stackTrace + "\n"; //"[" + log.type + "] " + 
-
 		float fixedHeight = position.height - currentScrollViewHeight;
-		scrollDetail = GUILayout.BeginScrollView(scrollDetail, false, false, GUIStyle.none, GUI.skin.verticalScrollbar, GUILayout.Width(position.width), GUILayout.Height(fixedHeight));
+		scrollDetail = GUILayout.BeginScrollView(scrollDetail, false, false, 
+			GUIStyle.none, GUI.skin.verticalScrollbar, 
+			GUILayout.Width(position.width), GUILayout.Height(fixedHeight));
 
-		GUILayout.TextArea(detail, styleDetail);
+		if (log != null) {
+			string[] lines = (log.condition + "\n" + log.stackTrace.Trim()).Split('\n');
+
+			if (selectedTraceLine >= lines.Length) {
+				selectedTraceLine = 0;
+			}
+
+			EditorGUI.BeginChangeCheck();
+			var lastSelectedTraceLine = selectedTraceLine;
+			selectedTraceLine = GUILayout.SelectionGrid(selectedTraceLine, lines, 1, styleDetail);
+			bool changed = EditorGUI.EndChangeCheck();
+
+			if (changed) {
+				if (lastSelectedTraceLine == selectedTraceLine) {
+					if (Time.realtimeSinceStartup - lastClickInTrace < DoubleClickTime) {
+						CallStack callStack = LineToCallStack(lines[selectedTraceLine]);
+						OpenCallStack(callStack);
+					}
+				}
+
+				lastClickInTrace = Time.realtimeSinceStartup;
+			}
+		}
+
 		GUILayout.EndScrollView();
 	}
+
+	float lastClickInTrace = 0;
+	int selectedTraceLine = 0;
 
 	string LogToString (ConsoleAsset.Log log) {
 		string str = log.condition + "\n" + log.stackTrace;
@@ -384,7 +442,7 @@ public class MyConsole : EditorWindow
 		return str;
 	}
 
-	private Texture2D MakeTex( int width, int height, Color col )
+	Texture2D MakeTex( int width, int height, Color col )
 	{
 		Color[] pix = new Color[width * height];
 		for( int i = 0; i < pix.Length; ++i )
@@ -395,6 +453,36 @@ public class MyConsole : EditorWindow
 		result.SetPixels( pix );
 		result.Apply();
 		return result;
+	}
+
+	CallStack LineToCallStack (string logLine) {
+		try {
+			var str = logLine.Trim();
+			var index = str.IndexOf(") (at Assets/");
+			str = str.Substring(index + 6);
+			index = str.IndexOf(")");
+			str = str.Substring(0, index);
+			index = str.LastIndexOf(".cs");
+
+			int lineNumber = 1;
+			string line = str.Substring(index + 4);
+			if (!line.Contains(",")){
+				lineNumber = int.Parse(line);
+			} else {
+				line = line.Substring(0, line.IndexOf(','));
+				lineNumber = int.Parse(line);
+			}
+
+			str = str.Substring(0, index + 3);
+			return new CallStack { 
+				path = str,
+				lineNumber = lineNumber
+			};
+		} catch (Exception e) {
+			//EditorUtility.DisplayDialog("Can not parse line", e.ToString(), "Ok");
+		}
+
+		return null;
 	}
 
 	#endregion //Draw
@@ -441,9 +529,10 @@ public class MyConsole : EditorWindow
 	const int ToolbarFontSize = 9;
 	const float DoubleClickTime = 0.3f;
 	const float ToolbarButtonWidth = 35;
+	const float DetailLineHeight = 20;
 	const float LogHeight = 33;
 	const float ToolbarSpaceScrollView = 2;
-	const float SplitHeight = 2;
+	const float SplitHeight = 4;
 	const float ToolbarHeight = 17;
 	const float MinScrollHeight = 70;
 	const float MinDetailHeight = 80;
@@ -485,13 +574,28 @@ public class MyConsole : EditorWindow
 	GUIStyle _styleDetail;
 	public GUIStyle styleDetail {
 		get {
-			if (_styleDetail == null) {
-				_styleDetail = new GUIStyle(GUI.skin.label);
-				_styleDetail.focused = GUI.skin.box.focused;
-				_styleDetail.fixedWidth = position.width - 5;
+			if (_styleDetail == null) 
+			{
+				_styleDetail = new GUIStyle(GUI.skin.button);
 				_styleDetail.alignment = TextAnchor.UpperLeft;
-				_styleDetail.wordWrap = true;
+				_styleDetail.fixedHeight = DetailLineHeight;
+				_styleDetail.padding = new RectOffset(5, 0, 3, 3);
+				_styleDetail.margin = new RectOffset(0, 0, 0, 0);
 				_styleDetail.richText = true;
+
+				_styleDetail.active.textColor = Color.white;
+				_styleDetail.active.background = MakeTex(2, 2, new Color32(61, 128, 223, 255));
+
+				_styleDetail.onActive.textColor = Color.white;
+				_styleDetail.onActive.background = MakeTex(2, 2, new Color32(61, 128, 223, 255));
+
+				_styleDetail.normal.textColor = Color.black;
+				_styleDetail.normal.background = texLogWhite;
+
+				_styleDetail.onNormal.textColor = Color.black;
+				_styleDetail.onNormal.background = texLogWhite;
+				
+				_styleDetail.wordWrap = false;
 			}
 			return _styleDetail;
 		}
@@ -500,8 +604,8 @@ public class MyConsole : EditorWindow
 	GUIStyle _styleLog;
 	public GUIStyle styleLog {
 		get {
-			if (_styleLog == null) {
-
+			if (_styleLog == null) 
+			{
 				_styleLog = new GUIStyle(GUI.skin.button);
 				_styleLog.alignment = TextAnchor.UpperLeft;
 				_styleLog.fixedHeight = LogHeight;

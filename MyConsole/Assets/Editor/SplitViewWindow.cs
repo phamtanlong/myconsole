@@ -8,7 +8,7 @@ public class SplitViewWindow : EditorWindow
 	bool resize = false;
 	Rect cursorChangeRect;
 
-	[MenuItem("Tools/Split View Window")]
+	//[MenuItem("Tools/Split View Window")]
 	public static void Init(){
 		SplitViewWindow t = GetWindow<SplitViewWindow>();
 		t.Show();
