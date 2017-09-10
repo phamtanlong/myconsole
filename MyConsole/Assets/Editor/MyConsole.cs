@@ -241,6 +241,8 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 			Debug.Break();
 			needPause = false;
 		}
+
+		CheckInput();
 	}
 
 	void DrawToolbar () {
@@ -296,7 +298,6 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 			logAsset.showError = GUILayout.Toggle(logAsset.showError, errorcontent, styleToolbarButton);
 		}
 		GUILayout.EndHorizontal();
-		CheckInput();
 	}
 
 	void CheckInput () {
@@ -415,8 +416,8 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 
 		float fixedHeight = position.height - currentScrollViewHeight;
 		scrollDetail = GUILayout.BeginScrollView(scrollDetail, false, false, 
-			GUIStyle.none, GUI.skin.verticalScrollbar, 
-			GUILayout.Width(position.width), GUILayout.Height(fixedHeight));
+			GUIStyle.none, GUI.skin.verticalScrollbar);//, 
+			//GUILayout.Width(position.width), GUILayout.Height(fixedHeight));
 
 		if (log != null) {
 			string[] lines = (log.condition + "\n" + log.stackTrace.Trim()).Split('\n');
@@ -455,7 +456,7 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 					lastClickInTrace = Time.realtimeSinceStartup;
 
 					//draw detail in file
-					DrawDetailLine(callStack);
+					//DrawDetailLine(callStack);
 				}
 
 				if (clicked) {
