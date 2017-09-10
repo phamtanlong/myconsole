@@ -6,16 +6,7 @@ using UnityEditor;
 [CreateAssetMenu(fileName = "ConsoleAsset", menuName = "Tools/Create Console Asset", order = 1)]
 [System.Serializable]
 public class ConsoleAsset : ScriptableObject {
-
-	[System.Serializable]
-	public class Log {
-		public int number;
-		public bool selected;
-		public string condition;
-		public string stackTrace;
-		public LogType type;
-	}
-
+	
 	public bool showFile = false;
 
 	public bool collapse = false;
@@ -27,4 +18,21 @@ public class ConsoleAsset : ScriptableObject {
 
 	[SerializeField]
 	public List<Log> logs = new List<Log>();
+}
+
+[System.Serializable]
+public class CallStack {
+	public string path;
+	public int lineNumber;
+}
+
+[System.Serializable]
+public class Log {
+	public int number;
+	public bool selected;
+	public string condition;
+	public string stackTrace;
+	public LogType type;
+
+	public CallStack callstack;
 }

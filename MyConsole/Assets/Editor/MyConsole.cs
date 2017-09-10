@@ -22,11 +22,6 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 
 	#endregion
 
-	public class CallStack {
-		public string path;
-		public int lineNumber;
-	}
-
 	[ContextMenu("Settings")]
 	static void ShowSetting() {
 		
@@ -127,12 +122,16 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 
 	void LogHandler(string condition, string stackTrace, LogType type)
 	{
-		logAsset.logs.Add(new ConsoleAsset.Log {
+		Log log = new Log {
 			condition = condition,
 			stackTrace = stackTrace,
 			type = type
-		});
-		//Repaint();
+		};
+
+		CallStack callStack = GetCallStackInLog(log);
+		log.callstack = callStack;
+
+		logAsset.logs.Add(log);
 
 		if (logAsset.errorPause && type == LogType.Exception || type == LogType.Assert) {
 			if (EditorApplication.isPlaying) {
@@ -152,15 +151,9 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 		}
 	}
 
-	void DoubleClickLog(ConsoleAsset.Log log)
+	void DoubleClickLog(Log log)
 	{
-		string[] lines = (log.condition + "\n" + log.stackTrace).Split('\n');
-		var line = lines.FirstOrDefault(x => x.Contains("Assets/") && x.Contains(".cs"));
-
-		if (!string.IsNullOrEmpty(line)) {
-			CallStack callStack = LineToCallStack(line);
-			OpenCallStack(callStack);
-		}
+		OpenCallStack(log.callstack);
 	}
 
 	void OpenCallStack (CallStack callStack) {
@@ -192,7 +185,7 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 	int selectedLog = 0;
 	string mylog = string.Empty;
 
-	List<ConsoleAsset.Log> visiableLogs = new List<ConsoleAsset.Log>();
+	List<Log> visiableLogs = new List<Log>();
 	List<string> detailLines = new List<string>();
 
 	void OnGUI()
@@ -200,12 +193,12 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 		DrawToolbar();
 		GUILayout.Space(ToolbarSpaceScrollView);
 
-		Dictionary<string, ConsoleAsset.Log> countCollapse = new Dictionary<string, ConsoleAsset.Log>();
+		Dictionary<string, Log> countCollapse = new Dictionary<string, Log>();
 
 		bool isSearching = !string.IsNullOrEmpty(keySearch);
 		string keySearchLower = keySearch.ToLower();
 
-		visiableLogs = new List<ConsoleAsset.Log>();
+		visiableLogs = new List<Log>();
 		foreach (var log in logAsset.logs) {
 			log.number = 1;
 
@@ -223,7 +216,7 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 
 				if (logAsset.collapse) {
 					string key = log.condition + log.stackTrace;
-					ConsoleAsset.Log lastLog;
+					Log lastLog;
 					if (countCollapse.TryGetValue(key, out lastLog)) {
 						lastLog.number++;
 					} else {
@@ -373,7 +366,7 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 
 	float lastClickInLog = 0;
 
-	void DrawLogList (List<ConsoleAsset.Log> list) {
+	void DrawLogList (List<Log> list) {
 		var arr = list.Select(x => LogToString(x)).ToArray();
 
 		scrollPos = GUILayout.BeginScrollView(scrollPos, GUIStyle.none, GUI.skin.verticalScrollbar, 
@@ -418,7 +411,20 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 				GUILayout.Box(list[i].number.ToString(), styleNumber, GUILayout.Width(22), GUILayout.Height(LogHeight));
 			}
 
-			bool clicked = GUILayout.Button(content, styleLog);
+			bool clicked = false;
+			if (logAsset.showFile) {
+				styleLog.fixedWidth = FileColumeWidth;
+				if (list[i].callstack != null) {
+					var path = list[i].callstack.path;
+					var index = path.LastIndexOf("/");
+					string file = path.Substring(index + 1);
+					clicked = GUILayout.Button(file, styleLog, GUILayout.Height(LogHeight));
+				} else {
+					clicked = GUILayout.Button("---", styleLog, GUILayout.Height(LogHeight));
+				}
+			}
+			styleLog.fixedWidth = position.width;
+			clicked |= GUILayout.Button(content, styleLog);
 
 			GUILayout.EndHorizontal();
 
@@ -444,14 +450,14 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 		GUILayout.EndScrollView();
 	}
 
-	void DrawDetail (List<ConsoleAsset.Log> list) {
-		ConsoleAsset.Log log = null;
+	void DrawDetail (List<Log> list) {
+		Log log = null;
 
 		if (selectedLog >= 0 && selectedLog < list.Count) {
 			log = list[selectedLog];
 		} else {
 			if (list.Count > 0){
-				log = list.Last<ConsoleAsset.Log>();
+				log = list.Last<Log>();
 			}
 		}
 
@@ -532,7 +538,7 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 	float lastClickInTrace = 0;
 	int selectedTraceLine = 0;
 
-	string LogToString (ConsoleAsset.Log log) {
+	string LogToString (Log log) {
 		string str = log.condition + "\n" + log.stackTrace;
 		//str = str.Trim();
 		string[] strs = str.Split('\n');
@@ -554,6 +560,18 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 		result.SetPixels( pix );
 		result.Apply();
 		return result;
+	}
+
+	static CallStack GetCallStackInLog (Log log) {
+		string[] lines = (log.condition + "\n" + log.stackTrace).Split('\n');
+		var line = lines.FirstOrDefault(x => x.Contains("Assets/") && x.Contains(".cs"));
+
+		if (!string.IsNullOrEmpty(line)) {
+			CallStack callStack = LineToCallStack(line);
+			return callStack;
+		}
+
+		return null;
 	}
 
 	static CallStack LineToCallStack (string logLine) {
@@ -634,6 +652,7 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 
 	#region Constants
 
+	const float FileColumeWidth = 120;
 	const string SpaceBeforeText = "  ";
 	const int ToolbarFontSize = 9;
 	const float DoubleClickTime = 0.3f;
