@@ -764,8 +764,8 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 
 	#region Resources Cache
 
-	Texture2D _border1;
-	public Texture2D border1 {
+	static Texture2D _border1;
+	static public Texture2D border1 {
 		get {
 			if (_border1 == null) {
 				_border1 = Resources.Load("border") as Texture2D;
@@ -774,8 +774,8 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 		}
 	}
 
-	Texture2D _border2;
-	public Texture2D border2 {
+	static Texture2D _border2;
+	static public Texture2D border2 {
 		get {
 			if (_border2 == null) {
 				_border2 = Resources.Load("border") as Texture2D;
@@ -784,8 +784,8 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 		}
 	}
 
-	Texture2D _borderSelected;
-	public Texture2D borderSelected {
+	static Texture2D _borderSelected;
+	static public Texture2D borderSelected {
 		get {
 			if (_borderSelected == null) {
 				_borderSelected = Resources.Load("border") as Texture2D;
@@ -794,8 +794,8 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 		}
 	}
 
-	Texture _logIcon;
-	public Texture logIcon {
+	static Texture _logIcon;
+	static public Texture logIcon {
 		get {
 			if (_logIcon == null) {
 				_logIcon = Resources.Load("log") as Texture;
@@ -804,8 +804,8 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 		}
 	}
 
-	Texture _warnIcon;
-	public Texture warnIcon {
+	static Texture _warnIcon;
+	static public Texture warnIcon {
 		get {
 			if (_warnIcon == null) {
 				_warnIcon = Resources.Load("warn") as Texture;
@@ -814,8 +814,8 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 		}
 	}
 
-	Texture _errorIcon;
-	public Texture errorIcon {
+	static Texture _errorIcon;
+	static public Texture errorIcon {
 		get {
 			if (_errorIcon == null) {
 				_errorIcon = Resources.Load("error") as Texture;
@@ -824,8 +824,8 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 		}
 	}
 
-	GUIStyle _styleDetail;
-	public GUIStyle styleDetail {
+	static GUIStyle _styleDetail;
+	static public GUIStyle styleDetail {
 		get {
 			if (_styleDetail == null) 
 			{
@@ -854,8 +854,8 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 		}
 	}
 
-	GUIStyle _styleLog;
-	public GUIStyle styleLog {
+	static GUIStyle _styleLog;
+	static public GUIStyle styleLog {
 		get {
 			if (_styleLog == null) 
 			{
@@ -880,8 +880,8 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 		}
 	}
 
-	GUIStyle _styleToolbar;
-	public GUIStyle styleToolbar {
+	static GUIStyle _styleToolbar;
+	static public GUIStyle styleToolbar {
 		get {
 			if (_styleToolbar == null) {
 				_styleToolbar = new GUIStyle(GUI.skin.button);
@@ -907,8 +907,8 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 		}
 	}
 
-	GUIStyle _styleCollapseNumber ;
-	public GUIStyle styleCollapseNumber {
+	static GUIStyle _styleCollapseNumber ;
+	static public GUIStyle styleCollapseNumber {
 		get {
 			if (_styleCollapseNumber == null) {
 				_styleCollapseNumber = new GUIStyle(GUI.skin.box);
@@ -922,8 +922,8 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 		}
 	}
 
-	Texture2D _texLogActive;
-	public Texture2D texLogActive {
+	static Texture2D _texLogActive;
+	static public Texture2D texLogActive {
 		get {
 			if (_texLogActive == null) {
 				_texLogActive = MakeTex(2, 2, new Color32(61, 128, 223, 255));
@@ -932,8 +932,8 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 		}
 	}
 
-	Texture2D _texLogBlack;
-	public Texture2D texLogBlack {
+	static Texture2D _texLogBlack;
+	static public Texture2D texLogBlack {
 		get {
 			if (_texLogBlack == null) {
 				_texLogBlack = MakeTex(2, 2, new Color32(216, 216, 216, 255));
@@ -942,8 +942,8 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 		}
 	}
 
-	Texture2D _texLogWhite;
-	public Texture2D texLogWhite {
+	static Texture2D _texLogWhite;
+	static public Texture2D texLogWhite {
 		get {
 			if (_texLogWhite == null) {
 				_texLogWhite = MakeTex(2, 2, new Color32(200, 200, 200, 255));
@@ -956,14 +956,14 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 
 	#region Utilities
 
-	void OpenCallStack (CallStack callStack) {
+	static void OpenCallStack (CallStack callStack) {
 		if (callStack != null) {
 			Object obj = AssetDatabase.LoadAssetAtPath<Object>(callStack.path);
 			AssetDatabase.OpenAsset(obj, callStack.lineNumber);
 		}
 	}
 
-	void HightLightFile(Log log)
+	static void HightLightFile(Log log)
 	{
 		if (log.callstack != null) {
 			Object obj = AssetDatabase.LoadAssetAtPath<Object>(log.callstack.path);
@@ -972,7 +972,7 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 		}
 	}
 
-	string LogToString (Log log) {
+	static string LogToString (Log log) {
 		string str = log.condition + "\n" + log.stackTrace;
 		//str = str.Trim();
 		string[] strs = str.Split('\n');
@@ -983,7 +983,7 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 		return str;
 	}
 
-	Texture2D MakeTex( int width, int height, Color col )
+	static Texture2D MakeTex( int width, int height, Color col )
 	{
 		Color[] pix = new Color[width * height];
 		for( int i = 0; i < pix.Length; ++i )
