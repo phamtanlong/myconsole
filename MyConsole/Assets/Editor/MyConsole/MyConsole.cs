@@ -13,12 +13,24 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 
 	public void AddItemsToMenu(GenericMenu menu)
 	{
-//		menu.AddItem(new GUIContent("Setting"), false, () => {
-//			MyConsoleSetting window = (MyConsoleSetting)EditorWindow.GetWindow(typeof(MyConsoleSetting));
-//			window.Show();
-//		});
-//
-//		menu.AddSeparator(string.Empty);
+		menu.AddItem(new GUIContent("Reload Resources"), false, () => {
+			_border1 = null;
+			_border2 = null;
+			_borderSelected = null;
+			_errorIcon = null;
+			//_logAsset = null;
+			_logIcon = null;
+			_styleCollapseNumber = null;
+			_styleDetail = null;
+			_styleLog = null;
+			_styleToolbar = null;
+			_texLogActive = null;
+			_texLogBlack = null;
+			_texLogWhite = null;
+			_warnIcon = null;
+		});
+
+		menu.AddSeparator(string.Empty);
 
 		// Column settings
 
@@ -405,7 +417,7 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 
 		//background of toolbar, just for beauty
 		GUI.enabled = false;
-		GUI.Button(new Rect(-5, 0, position.width + 5, ToolbarHeight), string.Empty);
+		GUI.Box(new Rect(-5, 0, position.width + 5, ToolbarHeight), string.Empty);
 		GUI.enabled = true;
 
 		GUILayout.BeginHorizontal();
@@ -414,6 +426,23 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 			if (GUILayout.Button(" Clear ", styleToolbar)) {
 				logAsset.logs.Clear();
 			}
+
+			//collapse toggle
+			if (position.width >= MinWidthToShowCollapse) {
+				logAsset.collapse = GUILayout.Toggle(logAsset.collapse, "Collapse", styleToolbar);
+			}
+			GUILayout.Space(2);
+			//clear on play toggle
+			if (position.width >= MinWidthToShowClearOnPlay) {
+				logAsset.clearOnPlay = GUILayout.Toggle(logAsset.clearOnPlay, "ClearOnPlay", styleToolbar);
+			}
+			GUILayout.Space(2);
+			//error pause toggle
+			if (position.width >= MinWidthToShowErrorPause) {
+				logAsset.errorPause = GUILayout.Toggle(logAsset.errorPause, "ErrorPause", styleToolbar);
+			}
+
+			GUILayout.Space(5);
 
 			//search
 			var lastSearchKey = keySearch;
@@ -440,24 +469,8 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 				keySearch = string.Empty;
 			}
 
+			GUILayout.Space(1);
 			GUILayout.FlexibleSpace();
-
-			//collapse toggle
-			if (position.width >= MinWidthToShowCollapse) {
-				logAsset.collapse = GUILayout.Toggle(logAsset.collapse, "Collapse", styleToolbar);
-			}
-
-			//clear on play toggle
-			if (position.width >= MinWidthToShowClearOnPlay) {
-				logAsset.clearOnPlay = GUILayout.Toggle(logAsset.clearOnPlay, "ClearOnPlay", styleToolbar);
-			}
-
-			//error pause toggle
-			if (position.width >= MinWidthToShowErrorPause) {
-				logAsset.errorPause = GUILayout.Toggle(logAsset.errorPause, "ErrorPause", styleToolbar);
-			}
-
-			GUILayout.Space(5);
 
 			//Log + Warning + Error (toggle + number)
 
@@ -465,9 +478,11 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 			GUIContent warncontent = new GUIContent("" + logAsset.logs.Count(x => x.type == LogType.Warning), warnIcon);
 			GUIContent errorcontent = new GUIContent("" + logAsset.logs.Count(x => x.type != LogType.Log && x.type != LogType.Warning), errorIcon);
 
-			logAsset.showLog = GUILayout.Toggle(logAsset.showLog, logcontent, styleToolbar);
-			logAsset.showWarn = GUILayout.Toggle(logAsset.showWarn, warncontent, styleToolbar);
-			logAsset.showError = GUILayout.Toggle(logAsset.showError, errorcontent, styleToolbar);
+			logAsset.showLog = GUILayout.Toggle(logAsset.showLog, logcontent, styleToolbar, GUILayout.MaxHeight(ToolbarHeight-2));
+			GUILayout.Space(1);
+			logAsset.showWarn = GUILayout.Toggle(logAsset.showWarn, warncontent, styleToolbar, GUILayout.MaxHeight(ToolbarHeight-2));
+			GUILayout.Space(1);
+			logAsset.showError = GUILayout.Toggle(logAsset.showError, errorcontent, styleToolbar, GUILayout.MaxHeight(ToolbarHeight-2));
 		}
 		GUILayout.EndHorizontal();
 	}
@@ -718,13 +733,43 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 	const float LogHeight = 33;
 	const float ToolbarSpaceScrollView = 2;
 	const float SplitHeight = 4;
-	const float ToolbarHeight = 18;
+	const float ToolbarHeight = 19;
 	const float MinScrollHeight = 70;
 	const float MinDetailHeight = 80;
 
 	#endregion //Constants
 
 	#region Resources Cache
+
+	Texture2D _border1;
+	public Texture2D border1 {
+		get {
+			if (_border1 == null) {
+				_border1 = Resources.Load("border") as Texture2D;
+			}
+			return _border1;
+		}
+	}
+
+	Texture2D _border2;
+	public Texture2D border2 {
+		get {
+			if (_border2 == null) {
+				_border2 = Resources.Load("border") as Texture2D;
+			}
+			return _border2;
+		}
+	}
+
+	Texture2D _borderSelected;
+	public Texture2D borderSelected {
+		get {
+			if (_borderSelected == null) {
+				_borderSelected = Resources.Load("border") as Texture2D;
+			}
+			return _borderSelected;
+		}
+	}
 
 	Texture _logIcon;
 	public Texture logIcon {
@@ -817,10 +862,23 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 		get {
 			if (_styleToolbar == null) {
 				_styleToolbar = new GUIStyle(GUI.skin.button);
-				_styleToolbar.normal.textColor = Color.black;
 				_styleToolbar.fontSize = ToolbarFontSize;
-				_styleToolbar.margin = new RectOffset(0, 0, 1, 0);
-				_styleToolbar.fixedHeight = ToolbarHeight;
+				_styleToolbar.margin = new RectOffset(0, 0, 2, 1);
+				_styleToolbar.fixedHeight = ToolbarHeight-3;
+
+				Texture2D texOff = MakeTex(3, 3, new Color32(195, 195, 195, 255));
+				_styleToolbar.normal.textColor = Color.black;
+				_styleToolbar.normal.background = texOff;
+
+				Texture2D texOn = MakeTex(3, 3, new Color32(244, 244, 244, 255));
+				_styleToolbar.onNormal.textColor = Color.black;
+				_styleToolbar.onNormal.background = texOn;
+
+				_styleToolbar.active.textColor = Color.black;
+				_styleToolbar.active.background = texOn;
+
+				_styleToolbar.onActive.textColor = Color.black;
+				_styleToolbar.onActive.background = texOff;
 			}
 			return _styleToolbar;
 		}
