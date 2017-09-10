@@ -5,6 +5,7 @@ using System.Linq;
 using System.IO;
 using System;
 using Object = UnityEngine.Object;
+using System.Text.RegularExpressions;
 
 public class MyConsole : EditorWindow, IHasCustomMenu
 {
@@ -216,10 +217,20 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 				|| (log.type != LogType.Log && log.type != LogType.Warning && logAsset.showError)) {
 
 				if (isSearching) {
-					if (!log.condition.ToLower().Contains(keySearchLower)
-						&& 
-						!log.stackTrace.ToLower().Contains(keySearchLower)) {
-						continue;
+					string text = log.condition + "\n" + log.stackTrace;
+					//if (logAsset.searchRegex) {
+					//	try {
+					//		Regex r = new Regex(keySearch, RegexOptions.IgnoreCase);
+					//		Match m = r.Match(text);
+					//		if (!m.Success)
+					//			continue;
+					//	} catch {
+					//	}
+					//} else 
+					{
+						if (!text.ToLower().Contains(keySearchLower)) {
+							continue;
+						}
 					}
 				}
 
@@ -267,7 +278,7 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 		GUI.enabled = true;
 		GUILayout.BeginHorizontal();
 		{
-			RectOffset margin = new RectOffset(0, 0, 0, 0);
+			RectOffset margin = new RectOffset(0, 0, 1, 0);
 
 			GUIStyle styleToolbarButton = new GUIStyle(GUI.skin.button);
 			styleToolbarButton.normal.textColor = Color.black;
@@ -290,9 +301,19 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 				}
 			}
 
+			bool showSearchOption = GUILayout.Button("...", styleToolbarButton);
+			if (showSearchOption) {
+				GenericMenu menu = new GenericMenu();
+				menu.AddItem(new GUIContent("Regex"), logAsset.searchRegex, () => {
+					logAsset.searchRegex = !logAsset.searchRegex;
+				});
+				menu.ShowAsContext();
+			}
+
 			bool clearSearch = GUILayout.Button("X", styleToolbarButton);
-			if (clearSearch)
+			if (clearSearch) {
 				keySearch = string.Empty;
+			}
 
 			//GUILayout.Label(mylog);
 			//GUILayout.Toggle(isInited, "Inited");
@@ -681,10 +702,10 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 
 	#region Constants
 
-	const float MinWidthToShowFileColumn = 486;
-	const float MinWidthToShowCollapse = 431;
-	const float MinWidthToShowClearOnPlay = 377;
-	const float MinWidthToShowErrorPause = 315;
+	const float MinWidthToShowFileColumn = 486 - 20;
+	const float MinWidthToShowCollapse = 431 - 20;
+	const float MinWidthToShowClearOnPlay = 377 - 20;
+	const float MinWidthToShowErrorPause = 315 - 20;
 
 	const float FileColumeWidth = 120;
 	const string SpaceBeforeText = "  ";
