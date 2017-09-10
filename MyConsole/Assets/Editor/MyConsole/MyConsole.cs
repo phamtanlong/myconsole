@@ -163,6 +163,13 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 		}
 	}
 
+	[UnityEditor.Callbacks.DidReloadScripts]
+	public static void OnScriptsReloaded() {
+		//Debug.Log("Compile Done");
+		var logAsset = MyConsole.LoadOrCreateAsset();
+		logAsset.logs.RemoveAll(x => x.isCompileError);
+	}
+
 	#endregion //Lifecycle
 
 	#region Process
@@ -185,12 +192,12 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 
 	void RegisterHandlers () {
 		UnRegisterHandlers();
-		Application.logMessageReceived += LogHandler;
+		Application.logMessageReceivedThreaded += LogHandler;
 		EditorApplication.playmodeStateChanged += PlayModeChange;
 	}
 
 	void UnRegisterHandlers () {
-		Application.logMessageReceived -= LogHandler;
+		Application.logMessageReceivedThreaded -= LogHandler;
 		EditorApplication.playmodeStateChanged -= PlayModeChange;
 	}
 
@@ -202,11 +209,20 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 
 	void LogHandler(string condition, string stackTrace, LogType type)
 	{
+		bool isCompileError = condition.Contains("): error CS");
+		if (isCompileError) {
+			var hadIt = logAsset.logs.Any(x => x.isCompileError && x.condition.Equals(condition));
+			if (hadIt)
+				return; //do not duplicate 1 compile error
+		}
+
 		Log log = new Log {
 			condition = condition,
 			stackTrace = stackTrace,
 			type = type
 		};
+
+		log.isCompileError = isCompileError;
 
 		CallStack callStack = GetCallStackInLog(log);
 		log.callstack = callStack;
@@ -352,7 +368,7 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 					//			continue;
 					//	} catch {
 					//	}
-					//} else 
+					//} else
 					{
 						if (!log.condition.ToLower().Contains(keySearchLower)) {
 							continue; //not match search => skip to next log

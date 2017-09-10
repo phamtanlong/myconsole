@@ -4,9 +4,45 @@ using UnityEngine;
 using UnityEditor;
 using System;
 using System.Linq;
+using System.Reflection;
+using Encoder = TinyJSON.Encoder;
 
 public class Test : MonoBehaviour {
-	
+
+	[MenuItem("Test/Test---")]
+	public static void TestClear () {
+		ClearLog();
+	}
+
+	static void ClearLog()
+	{
+		Assembly assembly = Assembly.GetAssembly(typeof(SceneView));
+		Type logEntries = assembly.GetType("UnityEditorInternal.LogEntries");
+		logEntries.GetMethod("Clear").Invoke (new object (), null);
+
+		//Debug.Log(Encoder.Encode(logEntries));
+		var mems = logEntries.GetMembers();
+		foreach (var mem in mems.Where(x => x.MemberType == MemberTypes.Method)) {
+			Debug.Log(mem.MemberType + ": " + mem.Name + " => " + ((MethodInfo)mem).ReturnType);
+		}
+
+		Debug.Log("--------");
+
+		var method = logEntries.GetMethod("GetEntryCount");
+		var paras = method.GetParameters();
+		foreach (var para in paras) {
+			Debug.Log(para.ParameterType + ": " + para.Name);
+		}
+
+		Debug.Log("return " + method.ReturnType);
+
+		int count = (int)logEntries.GetMethod("GetCount").Invoke(new object (), null);
+
+		//if (count > 0)
+			//Debug.Log("Error = " + count);
+			//throw new Exception("Cannot build because you have compile errors!");
+	}
+
 	[MenuItem("Test/All Log")]
 	public static void AllLog () {
 		AnotherClass.SayHello();

@@ -42,4 +42,6 @@ public class Log {
 	public string fileName = string.Empty;
 	public float time;
 	public long frame;
+
+	public bool isCompileError = false;
 }
