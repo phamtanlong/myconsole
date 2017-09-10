@@ -16,6 +16,8 @@ public class ConsoleAsset : ScriptableObject {
 		public LogType type;
 	}
 
+	public bool showFile = false;
+
 	public bool collapse = false;
 	public bool clearOnPlay = true;
 	public bool errorPause = false;

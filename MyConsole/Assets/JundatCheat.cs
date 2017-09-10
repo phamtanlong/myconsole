@@ -2,8 +2,82 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
+using System;
+using TinyJSON;
+using System.Linq;
 
 public class JundatCheat : MonoBehaviour {
+
+	public class CallStack {
+		public string path;
+		public int lineNumber;
+	}
+
+	static CallStack LineToCallStack (string logLine) {
+		try {
+			var str = logLine.Trim();
+			var index = str.IndexOf("Assets/");
+			str = str.Substring(index);
+			index = str.IndexOf(")");
+			str = str.Substring(0, index);
+			index = str.LastIndexOf(".cs");
+
+			string line = str.Substring(index + 4);
+			int lineNumber = StringToNumber(line);
+
+			str = str.Substring(0, index + 3);
+			return new CallStack { 
+				path = str,
+				lineNumber = lineNumber
+			};
+		} catch (Exception e) {
+			//EditorUtility.DisplayDialog("Can not parse line", e.ToString(), "Ok");
+		}
+
+		return null;
+	}
+
+	private static int StringToNumber(string input)
+	{
+		bool findOut = false;
+		string strNumber = string.Empty;
+		for (int i = 0; i < input.Length; i++) {
+			if (char.IsNumber(input[i])) {
+				strNumber += input[i];
+				findOut = true;
+			} else if (findOut) {
+				break;
+			}
+		}
+		return int.Parse(strNumber);
+	}
+
+	[MenuItem("Jundat1/Test 1")]
+	public static void Test1 () {
+		string s1 = "Condition balah balah\nUnityEngine.Debug:Log(Object)\nJundatCheat:log2() (at Assets/JundatCheat.cs:29)\nJundatCheat:AllLog() (at Assets/JundatCheat.cs:10)";
+		var line = s1.Split('\n').FirstOrDefault(x => x.Contains("Assets/") && x.Contains(".cs"));
+		Debug.Log(line);
+		CallStack callStack = LineToCallStack(line);
+		Debug.Log(TinyJSON.Encoder.Encode(callStack));
+	}
+
+	[MenuItem("Jundat1/Test 2")]
+	public static void Test2 () {
+		string s1 = "Assets/Editor/MyConsole.cs(538,22): warning CS0168: The variable `e' is declared but never used";
+		var line = s1.Split('\n').FirstOrDefault(x => x.Contains("Assets/") && x.Contains(".cs"));
+		Debug.Log(line);
+		CallStack callStack = LineToCallStack(line);
+		Debug.Log(TinyJSON.Encoder.Encode(callStack));
+	}
+
+	[MenuItem("Jundat1/Test 3")]
+	public static void Test3 () {
+		string s1 = "ArgumentException: Getting control 4's position in a group with only 4 controls when doing KeyDown\nAborting\nUnityEngine.GUILayoutGroup.GetNext () (at /Users/builduser/buildslave/unity/build/Runtime/IMGUI/Managed/LayoutGroup.cs:114)\nUnityEngine.GUILayoutUtility.DoGetRect (UnityEngine.GUIContent content, UnityEngine.GUIStyle style, UnityEngine.GUILayoutOption[] options) (at /Users/builduser/buildslave/unity/build/Runtime/IMGUI/Managed/GUILayoutUtility.cs:379)\nUnityEngine.GUILayoutUtility.GetRect (UnityEngine.GUIContent content, UnityEngine.GUIStyle style, UnityEngine.GUILayoutOption[] options) (at /Users/builduser/buildslave/unity/build/Runtime/IMGUI/Managed/GUILayoutUtility.cs:339)\nUnityEngine.GUILayout.DoButton (UnityEngine.GUIContent content, UnityEngine.GUIStyle style, UnityEngine.GUILayoutOption[] options) (at /Users/builduser/buildslave/unity/build/Runtime/IMGUI/Managed/GUILayout.cs:53)\nUnityEngine.GUILayout.Button (System.String text, UnityEngine.GUIStyle style, UnityEngine.GUILayoutOption[] options) (at /Users/builduser/buildslave/unity/build/Runtime/IMGUI/Managed/GUILayout.cs:49)\nMyConsole.DrawDetail (System.Collections.Generic.List`1 list) (at Assets/Editor/MyConsole.cs:444)\nMyConsole.OnGUI () (at Assets/Editor/MyConsole.cs:233)\nSystem.Reflection.MonoMethod.Invoke (System.Object obj, BindingFlags invokeAttr, System.Reflection.Binder binder, System.Object[] parameters, System.Globalization.CultureInfo culture) (at /Users/builduser/buildslave/mono/build/mcs/class/corlib/System.Reflection/MonoMethod.cs:222)";
+		var line = s1.Split('\n').FirstOrDefault(x => x.Contains("Assets/") && x.Contains(".cs"));
+		Debug.Log(line);
+		CallStack callStack = LineToCallStack(line);
+		Debug.Log(TinyJSON.Encoder.Encode(callStack));
+	}
 
 	[MenuItem("Jundat/All Log")]
 	public static void AllLog () {

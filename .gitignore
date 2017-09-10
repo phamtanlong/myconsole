@@ -1,3 +1,5 @@
 MyConsole/Library
 MyConsole/Temp
 MyConsole/ProjectSettings
+MyConsole/obj
+*.userprefs

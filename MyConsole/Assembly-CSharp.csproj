@@ -68,6 +68,9 @@
  <Reference Include="Vk">
  <HintPath>/Users/phamtanlong/Documents/MyConsole/MyConsole/Assets/Vk.dll</HintPath>
  </Reference>
+ <Reference Include="TinyJSON">
+ <HintPath>/Users/phamtanlong/Documents/MyConsole/MyConsole/Assets/TinyJSON.dll</HintPath>
+ </Reference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

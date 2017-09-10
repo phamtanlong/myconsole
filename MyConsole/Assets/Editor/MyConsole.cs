@@ -6,21 +6,40 @@ using System.IO;
 using System;
 using Object = UnityEngine.Object;
 
-public class MyConsole : EditorWindow
+public class MyConsole : EditorWindow, IHasCustomMenu
 {
+	#region IHasCustomMenu implementation
+
+	public void AddItemsToMenu(GenericMenu menu)
+	{
+		menu.AddItem(new GUIContent("Setting"), false, MenuSetting);
+	}
+
+	void MenuSetting () {
+		MyConsoleSetting window = (MyConsoleSetting)EditorWindow.GetWindow(typeof(MyConsoleSetting));
+		window.Show();
+	}
+
+	#endregion
+
 	public class CallStack {
 		public string path;
 		public int lineNumber;
+	}
+
+	[ContextMenu("Settings")]
+	static void ShowSetting() {
+		
 	}
 
 	[MenuItem("Tools/My Console")]
 	static void ShowMe()
 	{
 		MyConsole window = (MyConsole)EditorWindow.GetWindow(typeof(MyConsole));
-		window.ShowTab();
+		window.Show();
 	}
 
-	const string assetPath = "Assets/ConsoleAsset.asset";
+	public const string assetPath = "Assets/ConsoleAsset.asset";
 	static readonly GUILayoutOption[] opts = new GUILayoutOption[]{};
 
 	static bool isInited = false;
@@ -80,7 +99,7 @@ public class MyConsole : EditorWindow
 		logAsset.logs.Clear();
 	}
 
-	ConsoleAsset LoadOrCreateAsset () {
+	public static ConsoleAsset LoadOrCreateAsset () {
 		var asset = AssetDatabase.LoadAssetAtPath(assetPath, typeof(ConsoleAsset)) as ConsoleAsset;
 
 		if (asset == null) {
@@ -136,10 +155,10 @@ public class MyConsole : EditorWindow
 	void DoubleClickLog(ConsoleAsset.Log log)
 	{
 		string[] lines = log.stackTrace.Split('\n');
-		if (lines.Length >= 2) {
-			string secondLine = lines[1];
+		var line = lines.FirstOrDefault(x => x.Contains("Assets/") && x.Contains(".cs"));
 
-			CallStack callStack = LineToCallStack(secondLine);
+		if (!string.IsNullOrEmpty(line)) {
+			CallStack callStack = LineToCallStack(line);
 			OpenCallStack(callStack);
 		}
 	}
@@ -451,16 +470,18 @@ public class MyConsole : EditorWindow
 	void DrawDetailLine (CallStack callStack) {
 		if (callStack != null) {
 			string path = Path.Combine(Application.dataPath, callStack.path.Replace("Assets/", string.Empty));
-			string[] lines = File.ReadAllLines(path);
-			int beginLine = callStack.lineNumber - 3 > 0 ? callStack.lineNumber - 3 : 0;
-			int endLine = callStack.lineNumber + 3 < lines.Length - 1 ? callStack.lineNumber + 3 : lines.Length - 1;
+			if (File.Exists(path)) {
+				string[] lines = File.ReadAllLines(path);
+				int beginLine = callStack.lineNumber - 3 > 0 ? callStack.lineNumber - 3 : 0;
+				int endLine = callStack.lineNumber + 3 < lines.Length - 1 ? callStack.lineNumber + 3 : lines.Length - 1;
 
-			string content = string.Empty;
-			for (int i = beginLine; i < endLine; i++) {
-				content += lines[i] + "\n";
+				string content = string.Empty;
+				for (int i = beginLine; i < endLine; i++) {
+					content += lines[i] + "\n";
+				}
+
+				GUILayout.Box(content, GUILayout.Width(position.width), GUILayout.Height(100));
 			}
-
-			GUILayout.Box(content, GUILayout.Width(position.width), GUILayout.Height(100));
 		}
 	}
 
@@ -491,34 +512,42 @@ public class MyConsole : EditorWindow
 		return result;
 	}
 
-	CallStack LineToCallStack (string logLine) {
+	static CallStack LineToCallStack (string logLine) {
 		try {
 			var str = logLine.Trim();
-			var index = str.IndexOf(") (at Assets/");
-			str = str.Substring(index + 6);
+			var index = str.IndexOf("Assets/");
+			str = str.Substring(index);
 			index = str.IndexOf(")");
 			str = str.Substring(0, index);
 			index = str.LastIndexOf(".cs");
 
-			int lineNumber = 1;
 			string line = str.Substring(index + 4);
-			if (!line.Contains(",")){
-				lineNumber = int.Parse(line);
-			} else {
-				line = line.Substring(0, line.IndexOf(','));
-				lineNumber = int.Parse(line);
-			}
+			int lineNumber = StringToNumber(line);
 
 			str = str.Substring(0, index + 3);
 			return new CallStack { 
 				path = str,
 				lineNumber = lineNumber
 			};
-		} catch (Exception e) {
+		} catch {
 			//EditorUtility.DisplayDialog("Can not parse line", e.ToString(), "Ok");
 		}
 
 		return null;
+	}
+
+	static int StringToNumber(string input) {
+		bool findOut = false;
+		string strNumber = string.Empty;
+		for (int i = 0; i < input.Length; i++) {
+			if (char.IsNumber(input[i])) {
+				strNumber += input[i];
+				findOut = true;
+			} else if (findOut) {
+				break;
+			}
+		}
+		return int.Parse(strNumber);
 	}
 
 	#endregion //Draw

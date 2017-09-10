@@ -49,6 +49,7 @@
      <Compile Include="Assets\Editor\ConsoleAsset.cs" />
      <Compile Include="Assets\Editor\ConsoleClone.cs" />
      <Compile Include="Assets\Editor\MyConsole.cs" />
+     <Compile Include="Assets\Editor\MyConsoleSetting.cs" />
      <Compile Include="Assets\Editor\SplitViewWindow.cs" />
  <Reference Include="UnityEditor.Advertisements">
  <HintPath>/Applications/Unity5.5/Unity.app/Contents/UnityExtensions/Unity/Advertisements/Editor/UnityEditor.Advertisements.dll</HintPath>
@@ -112,6 +113,9 @@
  </Reference>
  <Reference Include="UnityEditor.OSXStandalone.Extensions">
  <HintPath>/Applications/Unity5.5/Unity.app/Contents/PlaybackEngines/macstandalonesupport/UnityEditor.OSXStandalone.Extensions.dll</HintPath>
+ </Reference>
+ <Reference Include="TinyJSON">
+ <HintPath>/Users/phamtanlong/Documents/MyConsole/MyConsole/Assets/TinyJSON.dll</HintPath>
  </Reference>
  <Reference Include="UnityEditor.iOS.Extensions.Xcode">
  <HintPath>/Applications/Unity5.5/PlaybackEngines/iOSSupport/UnityEditor.iOS.Extensions.Xcode.dll</HintPath>
