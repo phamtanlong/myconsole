@@ -13,22 +13,7 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 
 	public void AddItemsToMenu(GenericMenu menu)
 	{
-		menu.AddItem(new GUIContent("Reload Resources"), false, () => {
-			_border1 = null;
-			_border2 = null;
-			_borderSelected = null;
-			_errorIcon = null;
-			//_logAsset = null;
-			_logIcon = null;
-			_styleCollapseNumber = null;
-			_styleDetail = null;
-			_styleLog = null;
-			_styleToolbar = null;
-			_texLogActive = null;
-			_texLogBlack = null;
-			_texLogWhite = null;
-			_warnIcon = null;
-		});
+		menu.AddItem(new GUIContent("Reload Resources"), false, ClearCacheResources);
 
 		menu.AddSeparator(string.Empty);
 
@@ -174,6 +159,23 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 
 	#region Process
 
+	void ClearCacheResources () {
+		_border1 = null;
+		_border2 = null;
+		_borderSelected = null;
+		_errorIcon = null;
+		_logAsset = null;
+		_logIcon = null;
+		_styleCollapseNumber = null;
+		_styleDetail = null;
+		_styleLog = null;
+		_styleToolbar = null;
+		_texLogActive = null;
+		_texLogBlack = null;
+		_texLogWhite = null;
+		_warnIcon = null;
+	}
+
 	void ClearData () {
 		logAsset.logs.Clear();
 	}
@@ -248,6 +250,9 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 
 	void PlayModeChange()
 	{
+		//reload resource
+		ClearCacheResources();
+
 		//clear on play
 		if (EditorApplication.isPlayingOrWillChangePlaymode) {
 			if (!EditorApplication.isPlaying) {
