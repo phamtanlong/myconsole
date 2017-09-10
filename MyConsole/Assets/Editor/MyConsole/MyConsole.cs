@@ -343,19 +343,18 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 
 				//check search key
 				if (isSearching) {
-					string text = log.condition + "\n" + log.stackTrace;
 					//TODO: Regex search
 					//if (logAsset.searchRegex) {
 					//	try {
 					//		Regex r = new Regex(keySearch, RegexOptions.IgnoreCase);
-					//		Match m = r.Match(text);
+					//		Match m = r.Match(log.condition);
 					//		if (!m.Success)
 					//			continue;
 					//	} catch {
 					//	}
 					//} else 
 					{
-						if (!text.ToLower().Contains(keySearchLower)) {
+						if (!log.condition.ToLower().Contains(keySearchLower)) {
 							continue; //not match search => skip to next log
 						}
 					}
@@ -426,24 +425,27 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 			if (GUILayout.Button(" Clear ", styleToolbar)) {
 				logAsset.logs.Clear();
 			}
+			GUILayout.Space(1);
 
 			//collapse toggle
 			if (position.width >= MinWidthToShowCollapse) {
 				logAsset.collapse = GUILayout.Toggle(logAsset.collapse, "Collapse", styleToolbar);
+				GUILayout.Space(1);
 			}
-			GUILayout.Space(2);
+
 			//clear on play toggle
 			if (position.width >= MinWidthToShowClearOnPlay) {
 				logAsset.clearOnPlay = GUILayout.Toggle(logAsset.clearOnPlay, "ClearOnPlay", styleToolbar);
+				GUILayout.Space(1);
 			}
-			GUILayout.Space(2);
+
 			//error pause toggle
 			if (position.width >= MinWidthToShowErrorPause) {
 				logAsset.errorPause = GUILayout.Toggle(logAsset.errorPause, "ErrorPause", styleToolbar);
+				GUILayout.Space(1);
 			}
 
-			GUILayout.Space(5);
-
+			GUILayout.Space(1);
 			//search
 			var lastSearchKey = keySearch;
 			keySearch = GUILayout.TextField(keySearch, GUILayout.Width(100), GUILayout.Height(ToolbarHeight - 2));
@@ -866,7 +868,7 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 				_styleToolbar.margin = new RectOffset(0, 0, 2, 1);
 				_styleToolbar.fixedHeight = ToolbarHeight-3;
 
-				Texture2D texOff = MakeTex(3, 3, new Color32(195, 195, 195, 255));
+				Texture2D texOff = MakeTex(3, 3, new Color32(180, 180, 180, 255));
 				_styleToolbar.normal.textColor = Color.black;
 				_styleToolbar.normal.background = texOff;
 
