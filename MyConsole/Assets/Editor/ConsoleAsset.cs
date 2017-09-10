@@ -8,7 +8,10 @@ using UnityEditor;
 public class ConsoleAsset : ScriptableObject {
 
 	public bool searchRegex = false;
-	public bool showFile = false;
+
+	public bool columnFile = false;
+	public bool columnTime = false;
+	public bool columnFrame = false;
 
 	public bool collapse = false;
 	public bool clearOnPlay = true;
@@ -31,9 +34,12 @@ public class CallStack {
 public class Log {
 	public int number;
 	public bool selected;
-	public string condition;
-	public string stackTrace;
+	public string condition = string.Empty;
+	public string stackTrace = string.Empty;
 	public LogType type;
 
 	public CallStack callstack;
+	public string fileName = string.Empty;
+	public float time;
+	public long frame;
 }

@@ -13,20 +13,27 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 
 	public void AddItemsToMenu(GenericMenu menu)
 	{
-		menu.AddItem(new GUIContent("Setting"), false, MenuSetting);
-	}
+		menu.AddItem(new GUIContent("Setting"), false, () => {
+			MyConsoleSetting window = (MyConsoleSetting)EditorWindow.GetWindow(typeof(MyConsoleSetting));
+			window.Show();
+		});
 
-	void MenuSetting () {
-		MyConsoleSetting window = (MyConsoleSetting)EditorWindow.GetWindow(typeof(MyConsoleSetting));
-		window.Show();
+		menu.AddSeparator(string.Empty);
+
+		menu.AddItem(new GUIContent("Columns/File"), logAsset.columnFile, () => {
+			logAsset.columnFile = ! logAsset.columnFile;
+		});
+
+		menu.AddItem(new GUIContent("Columns/Time"), logAsset.columnTime, () => {
+			logAsset.columnTime = ! logAsset.columnTime;
+		});
+
+		menu.AddItem(new GUIContent("Columns/Frame"), logAsset.columnFrame, () => {
+			logAsset.columnFrame = ! logAsset.columnFrame;
+		});
 	}
 
 	#endregion
-
-	[ContextMenu("Settings")]
-	static void ShowSetting() {
-		
-	}
 
 	[MenuItem("Tools/My Console")]
 	static void ShowMe()
@@ -132,9 +139,19 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 		CallStack callStack = GetCallStackInLog(log);
 		log.callstack = callStack;
 
+		if (callStack != null) {
+			var index = callStack.path.LastIndexOf("/");
+			string fileName = callStack.path.Substring(index + 1);
+			log.fileName = fileName;
+		}
+
+		log.time = Time.realtimeSinceStartup;
+
+		log.frame = Time.frameCount;
+
 		logAsset.logs.Add(log);
 
-		if (logAsset.errorPause && type == LogType.Exception || type == LogType.Assert) {
+		if (logAsset.errorPause && (type == LogType.Exception || type == LogType.Assert)) {
 			if (EditorApplication.isPlaying) {
 				needPause = true;
 			}
@@ -319,11 +336,6 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 			//GUILayout.Toggle(isInited, "Inited");
 			GUILayout.FlexibleSpace();
 
-			if (position.width >= MinWidthToShowFileColumn) {
-				logAsset.showFile = GUILayout.Toggle(logAsset.showFile, "ShowFile", styleToolbarButton);
-				GUILayout.Space(5);
-			}
-
 			if (position.width >= MinWidthToShowCollapse) {
 				logAsset.collapse = GUILayout.Toggle(logAsset.collapse, "Collapse", styleToolbarButton);
 			}
@@ -416,6 +428,21 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 	void DrawLogList (List<Log> list) {
 		var arr = list.Select(x => LogToString(x)).ToArray();
 
+		float columnFileWidht = 0;
+		if (logAsset.columnFile && list.Count > 0) {
+			columnFileWidht = list.Max(x => x.fileName.Length) * 5.6f;
+		}
+
+		float columnTimeWidht = 0;
+		if (logAsset.columnTime && list.Count > 0) {
+			columnTimeWidht = (list.Max(x => x.time.ToString().Length) + 3) * 5.6f;
+		}
+
+		float columnFrameWidht = 0;
+		if (logAsset.columnFrame && list.Count > 0) {
+			columnFrameWidht = (list.Max(x => x.frame).ToString().Length + 3) * 5.6f;
+		}
+
 		scrollPos = GUILayout.BeginScrollView(scrollPos, GUIStyle.none, GUI.skin.verticalScrollbar, 
 			GUILayout.Width(position.width), GUILayout.Height(currentScrollViewHeight - ToolbarHeight - ToolbarSpaceScrollView));
 		for (int i = 0; i < arr.Length; ++i) {
@@ -448,6 +475,8 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 
 			GUILayout.BeginHorizontal();
 
+			// Collapse -----------------------
+
 			if (logAsset.collapse) {
 				GUIStyle styleNumber = new GUIStyle(GUI.skin.box);
 				styleNumber.normal.background = MakeTex(2, 2, new Color(1, 1, 1, 0));
@@ -459,17 +488,28 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 			}
 
 			bool clicked = false;
-			if (logAsset.showFile) {
-				styleLog.fixedWidth = FileColumeWidth;
-				if (list[i].callstack != null) {
-					var path = list[i].callstack.path;
-					var index = path.LastIndexOf("/");
-					string file = path.Substring(index + 1);
-					clicked = GUILayout.Button(file, styleLog, GUILayout.Height(LogHeight));
-				} else {
-					clicked = GUILayout.Button("---", styleLog, GUILayout.Height(LogHeight));
-				}
+
+			// Column Frame -------------------
+
+			if (logAsset.columnFrame) {
+				styleLog.fixedWidth = columnFrameWidht;
+				clicked |= GUILayout.Button(list[i].frame.ToString(), styleLog, GUILayout.Height(LogHeight));
 			}
+
+			// Column Time --------------------
+
+			if (logAsset.columnTime) {
+				styleLog.fixedWidth = columnTimeWidht;
+				clicked |= GUILayout.Button(list[i].time.ToString(), styleLog, GUILayout.Height(LogHeight));
+			}
+
+			// Column File --------------------
+
+			if (logAsset.columnFile) {
+				styleLog.fixedWidth = columnFileWidht;
+				clicked |= GUILayout.Button(list[i].fileName, styleLog, GUILayout.Height(LogHeight));
+			}
+
 			styleLog.fixedWidth = position.width;
 			clicked |= GUILayout.Button(content, styleLog);
 
@@ -555,7 +595,7 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 					lastClickInTrace = Time.realtimeSinceStartup;
 
 					//draw detail in file
-					//DrawDetailLine(callStack);
+					DrawDetailLine(callStack);
 				}
 
 				if (clicked) {
@@ -707,7 +747,8 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 	const float MinWidthToShowClearOnPlay = 377 - 20;
 	const float MinWidthToShowErrorPause = 315 - 20;
 
-	const float FileColumeWidth = 120;
+	const float TimeColumnWidth = 40;
+	//const float FileColumeWidth = 120;
 	const string SpaceBeforeText = "  ";
 	const int ToolbarFontSize = 9;
 	const float DoubleClickTime = 0.3f;

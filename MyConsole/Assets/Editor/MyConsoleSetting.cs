@@ -20,6 +20,6 @@ public class MyConsoleSetting : EditorWindow {
 
 	void OnGUI()
 	{
-		logAsset.showFile = GUILayout.Toggle(logAsset.showFile, "Show File Column");
+		//logAsset.columnFile = GUILayout.Toggle(logAsset.columnFile, "Show File Column");
 	}
 }
