@@ -20,6 +20,8 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 
 		menu.AddSeparator(string.Empty);
 
+		// Column settings
+
 		menu.AddItem(new GUIContent("Columns/File"), logAsset.columnFile, () => {
 			logAsset.columnFile = ! logAsset.columnFile;
 		});
@@ -31,6 +33,39 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 		menu.AddItem(new GUIContent("Columns/Frame"), logAsset.columnFrame, () => {
 			logAsset.columnFrame = ! logAsset.columnFrame;
 		});
+
+		menu.AddSeparator(string.Empty);
+
+		// Toolbar settings
+
+		menu.AddItem(new GUIContent("Collapse"), logAsset.collapse, () => {
+			logAsset.collapse = ! logAsset.collapse;
+		});
+
+		menu.AddItem(new GUIContent("Clear On Play"), logAsset.clearOnPlay, () => {
+			logAsset.clearOnPlay = ! logAsset.clearOnPlay;
+		});
+
+		menu.AddItem(new GUIContent("Error Pause"), logAsset.errorPause, () => {
+			logAsset.errorPause = ! logAsset.errorPause;
+		});
+
+		menu.AddSeparator(string.Empty);
+
+		// Log Type Show/Hide
+
+		menu.AddItem(new GUIContent("Log"), logAsset.showLog, () => {
+			logAsset.showLog = ! logAsset.showLog;
+		});
+
+		menu.AddItem(new GUIContent("Warning"), logAsset.showWarn, () => {
+			logAsset.showWarn = ! logAsset.showWarn;
+		});
+
+		menu.AddItem(new GUIContent("Error"), logAsset.showError, () => {
+			logAsset.showError = ! logAsset.showError;
+		});
+
 	}
 
 	#endregion
