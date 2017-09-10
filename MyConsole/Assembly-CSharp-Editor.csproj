@@ -46,11 +46,8 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-     <Compile Include="Assets\Editor\ConsoleAsset.cs" />
-     <Compile Include="Assets\Editor\ConsoleClone.cs" />
-     <Compile Include="Assets\Editor\MyConsole.cs" />
-     <Compile Include="Assets\Editor\MyConsoleSetting.cs" />
-     <Compile Include="Assets\Editor\SplitViewWindow.cs" />
+     <Compile Include="Assets\Editor\MyConsole\MyConsole.cs" />
+     <Compile Include="Assets\Editor\MyConsole\MyConsoleAsset.cs" />
  <Reference Include="UnityEditor.Advertisements">
  <HintPath>/Applications/Unity5.5/Unity.app/Contents/UnityExtensions/Unity/Advertisements/Editor/UnityEditor.Advertisements.dll</HintPath>
  </Reference>
@@ -98,12 +95,6 @@
  </Reference>
  <Reference Include="UnityEngine.VR">
  <HintPath>/Applications/Unity5.5/Unity.app/Contents/UnityExtensions/Unity/UnityVR/RuntimeEditor/UnityEngine.VR.dll</HintPath>
- </Reference>
- <Reference Include="TinyJSON">
- <HintPath>/Users/phamtanlong/Documents/MyConsole/MyConsole/Assets/TinyJSON.dll</HintPath>
- </Reference>
- <Reference Include="Vk">
- <HintPath>/Users/phamtanlong/Documents/MyConsole/MyConsole/Assets/Vk.dll</HintPath>
  </Reference>
  <Reference Include="UnityEditor.Graphs">
  <HintPath>/Applications/Unity5.5/Unity.app/Contents/Managed/UnityEditor.Graphs.dll</HintPath>

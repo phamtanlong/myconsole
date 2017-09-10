@@ -5,7 +5,7 @@ using UnityEditor;
 
 [CreateAssetMenu(fileName = "ConsoleAsset", menuName = "Tools/Create Console Asset", order = 1)]
 [System.Serializable]
-public class ConsoleAsset : ScriptableObject {
+public class MyConsoleAsset : ScriptableObject {
 
 	public bool searchRegex = false;
 

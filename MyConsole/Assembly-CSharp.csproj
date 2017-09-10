@@ -46,7 +46,8 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-     <Compile Include="Assets\JundatCheat.cs" />
+     <Compile Include="Assets\Test.cs" />
+     <Compile Include="Assets\Test1AnotherClassLongNameStupid.cs" />
  <Reference Include="UnityEngine.UI">
  <HintPath>/Applications/Unity5.5/Unity.app/Contents/UnityExtensions/Unity/GUISystem/UnityEngine.UI.dll</HintPath>
  </Reference>
@@ -64,12 +65,6 @@
  </Reference>
  <Reference Include="UnityEngine.VR">
  <HintPath>/Applications/Unity5.5/Unity.app/Contents/UnityExtensions/Unity/UnityVR/RuntimeEditor/UnityEngine.VR.dll</HintPath>
- </Reference>
- <Reference Include="TinyJSON">
- <HintPath>/Users/phamtanlong/Documents/MyConsole/MyConsole/Assets/TinyJSON.dll</HintPath>
- </Reference>
- <Reference Include="Vk">
- <HintPath>/Users/phamtanlong/Documents/MyConsole/MyConsole/Assets/Vk.dll</HintPath>
  </Reference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
