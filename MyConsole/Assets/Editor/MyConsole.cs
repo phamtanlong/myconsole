@@ -154,7 +154,7 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 
 	void DoubleClickLog(ConsoleAsset.Log log)
 	{
-		string[] lines = log.stackTrace.Split('\n');
+		string[] lines = (log.condition + "\n" + log.stackTrace).Split('\n');
 		var line = lines.FirstOrDefault(x => x.Contains("Assets/") && x.Contains(".cs"));
 
 		if (!string.IsNullOrEmpty(line)) {
@@ -174,12 +174,26 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 
 	#region Draw
 
+	bool focusOnListLog = false;
+	bool focusOnListDetail = false;
+
+	void FocusOnListLog () {
+		focusOnListLog = true;
+		focusOnListDetail = false;
+	}
+
+	void FocusOnListDetail () {
+		focusOnListLog = false;
+		focusOnListDetail = true;
+	}
+
 	string keySearch = string.Empty;
 	Vector2 scrollDetail;
 	int selectedLog = 0;
 	string mylog = string.Empty;
 
 	List<ConsoleAsset.Log> visiableLogs = new List<ConsoleAsset.Log>();
+	List<string> detailLines = new List<string>();
 
 	void OnGUI()
 	{
@@ -301,30 +315,57 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 	}
 
 	void CheckInput () {
-		if (selectedLog >= 0) {
-			if (Event.current != null && Event.current.isKey && Event.current.type == EventType.KeyDown) {
-				bool changed = false;
-				if (Event.current.keyCode == KeyCode.UpArrow) {
-					if (selectedLog > 0) {
-						visiableLogs[selectedLog].selected = false;
-						selectedLog = selectedLog - 1;
-						visiableLogs[selectedLog].selected = true;
-						changed = true;
+		if (focusOnListLog) {
+			if (selectedLog >= 0) {
+				if (Event.current != null && Event.current.isKey && Event.current.type == EventType.KeyDown) {
+					bool changed = false;
+					if (Event.current.keyCode == KeyCode.UpArrow) {
+						if (selectedLog > 0) {
+							visiableLogs[selectedLog].selected = false;
+							selectedLog = selectedLog - 1;
+							visiableLogs[selectedLog].selected = true;
+							changed = true;
+						}
+					}
+
+					if (Event.current.keyCode == KeyCode.DownArrow) {
+						if (selectedLog < visiableLogs.Count - 1) {
+							visiableLogs[selectedLog].selected = false;
+							selectedLog = selectedLog + 1;
+							visiableLogs[selectedLog].selected = true;
+							changed = true;
+						}
+					}
+
+					if (changed) {
+						selectedTraceLine = 0;//reset current trace line
+						scrollPos.y = selectedLog * LogHeight;
+						mylog = scrollPos.x + ", " + scrollPos.y;
 					}
 				}
-
-				if (Event.current.keyCode == KeyCode.DownArrow) {
-					if (selectedLog < visiableLogs.Count - 1) {
-						visiableLogs[selectedLog].selected = false;
-						selectedLog = selectedLog + 1;
-						visiableLogs[selectedLog].selected = true;
-						changed = true;
+			}
+		} else if (focusOnListDetail) {
+			if (selectedTraceLine >= 0) {
+				if (Event.current != null && Event.current.isKey && Event.current.type == EventType.KeyDown) {
+					bool changed = false;
+					if (Event.current.keyCode == KeyCode.UpArrow) {
+						if (selectedTraceLine > 0) {
+							selectedTraceLine--;
+							changed = true;
+						}
 					}
-				}
 
-				if (changed) {
-					scrollPos.y = selectedLog * LogHeight;
-					mylog = scrollPos.x + ", " + scrollPos.y;
+					if (Event.current.keyCode == KeyCode.DownArrow) {
+						if (selectedTraceLine < detailLines.Count - 1) {
+							selectedTraceLine++;
+							changed = true;
+						}
+					}
+
+					if (changed) {
+						scrollDetail.y = selectedTraceLine * DetailLineHeight;
+						mylog = scrollDetail.x + ", " + scrollDetail.y;
+					}
 				}
 			}
 		}
@@ -382,7 +423,7 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 			GUILayout.EndHorizontal();
 
 			if (clicked) {
-
+				FocusOnListLog();
 				GUI.FocusControl("balah"); //do not focus on search text field
 
 				float deltaTime = Time.realtimeSinceStartup - lastClickInLog;
@@ -421,12 +462,13 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 
 		if (log != null) {
 			string[] lines = (log.condition + "\n" + log.stackTrace.Trim()).Split('\n');
+			detailLines = new List<string>(lines);
 
-			if (selectedTraceLine >= lines.Length) {
+			if (selectedTraceLine >= detailLines.Count) {
 				selectedTraceLine = 0;
 			}
 
-			for (int i = 0; i < lines.Length; i++) {
+			for (int i = 0; i < detailLines.Count; i++) {
 				
 				if (i == selectedTraceLine) {
 					styleDetail.normal.textColor = Color.white;
@@ -442,10 +484,11 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 						styleDetail.normal.background = texLogWhite;
 				}
 
-				bool clicked = GUILayout.Button(lines[i], styleDetail);
+				bool clicked = GUILayout.Button(detailLines[i], styleDetail);
 
 				if (clicked) {
-					CallStack callStack = LineToCallStack(lines[i]);
+					FocusOnListDetail();
+					CallStack callStack = LineToCallStack(detailLines[i]);
 
 					float deltaTime = Time.realtimeSinceStartup - lastClickInTrace;
 					if (deltaTime < DoubleClickTime && i == selectedTraceLine) {
