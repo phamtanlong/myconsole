@@ -262,7 +262,9 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 	}
 
 	void DrawToolbar () {
-		GUI.Box(new Rect(0, 0, position.width, ToolbarHeight), string.Empty);
+		GUI.enabled = false;
+		GUI.Button(new Rect(-5, 0, position.width + 5, ToolbarHeight), string.Empty);
+		GUI.enabled = true;
 		GUILayout.BeginHorizontal();
 		{
 			RectOffset margin = new RectOffset(0, 0, 0, 0);
@@ -280,7 +282,7 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 
 			//search
 			var lastSearchKey = keySearch;
-			keySearch = GUILayout.TextField(keySearch, GUILayout.Width(100));
+			keySearch = GUILayout.TextField(keySearch, GUILayout.Width(100), GUILayout.Height(ToolbarHeight - 2));
 
 			if (lastSearchKey != keySearch) {
 				if (keySearch.EndsWith("\n")) {
@@ -288,15 +290,30 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 				}
 			}
 
+			bool clearSearch = GUILayout.Button("X", styleToolbarButton);
+			if (clearSearch)
+				keySearch = string.Empty;
+
 			//GUILayout.Label(mylog);
 			//GUILayout.Toggle(isInited, "Inited");
 			GUILayout.FlexibleSpace();
 
-			logAsset.collapse = GUILayout.Toggle(logAsset.collapse, "Collapse", styleToolbarButton);
+			if (position.width >= MinWidthToShowFileColumn) {
+				logAsset.showFile = GUILayout.Toggle(logAsset.showFile, "ShowFile", styleToolbarButton);
+				GUILayout.Space(5);
+			}
 
-			logAsset.clearOnPlay = GUILayout.Toggle(logAsset.clearOnPlay, "Clear On Play", styleToolbarButton);
+			if (position.width >= MinWidthToShowCollapse) {
+				logAsset.collapse = GUILayout.Toggle(logAsset.collapse, "Collapse", styleToolbarButton);
+			}
 
-			logAsset.errorPause = GUILayout.Toggle(logAsset.errorPause, "Error Pause", styleToolbarButton);
+			if (position.width >= MinWidthToShowClearOnPlay) {
+				logAsset.clearOnPlay = GUILayout.Toggle(logAsset.clearOnPlay, "ClearOnPlay", styleToolbarButton);
+			}
+
+			if (position.width >= MinWidthToShowErrorPause) {
+				logAsset.errorPause = GUILayout.Toggle(logAsset.errorPause, "ErrorPause", styleToolbarButton);
+			}
 
 			GUILayout.Space(5);
 
@@ -664,6 +681,11 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 
 	#region Constants
 
+	const float MinWidthToShowFileColumn = 486;
+	const float MinWidthToShowCollapse = 431;
+	const float MinWidthToShowClearOnPlay = 377;
+	const float MinWidthToShowErrorPause = 315;
+
 	const float FileColumeWidth = 120;
 	const string SpaceBeforeText = "  ";
 	const int ToolbarFontSize = 9;
@@ -673,7 +695,7 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 	const float LogHeight = 33;
 	const float ToolbarSpaceScrollView = 2;
 	const float SplitHeight = 4;
-	const float ToolbarHeight = 17;
+	const float ToolbarHeight = 18;
 	const float MinScrollHeight = 70;
 	const float MinDetailHeight = 80;
 

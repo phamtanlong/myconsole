@@ -99,6 +99,9 @@
  <Reference Include="UnityEngine.VR">
  <HintPath>/Applications/Unity5.5/Unity.app/Contents/UnityExtensions/Unity/UnityVR/RuntimeEditor/UnityEngine.VR.dll</HintPath>
  </Reference>
+ <Reference Include="TinyJSON">
+ <HintPath>/Users/phamtanlong/Documents/MyConsole/MyConsole/Assets/TinyJSON.dll</HintPath>
+ </Reference>
  <Reference Include="Vk">
  <HintPath>/Users/phamtanlong/Documents/MyConsole/MyConsole/Assets/Vk.dll</HintPath>
  </Reference>
@@ -113,9 +116,6 @@
  </Reference>
  <Reference Include="UnityEditor.OSXStandalone.Extensions">
  <HintPath>/Applications/Unity5.5/Unity.app/Contents/PlaybackEngines/macstandalonesupport/UnityEditor.OSXStandalone.Extensions.dll</HintPath>
- </Reference>
- <Reference Include="TinyJSON">
- <HintPath>/Users/phamtanlong/Documents/MyConsole/MyConsole/Assets/TinyJSON.dll</HintPath>
  </Reference>
  <Reference Include="UnityEditor.iOS.Extensions.Xcode">
  <HintPath>/Applications/Unity5.5/PlaybackEngines/iOSSupport/UnityEditor.iOS.Extensions.Xcode.dll</HintPath>

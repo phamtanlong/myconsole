@@ -6,7 +6,8 @@ using UnityEditor;
 [CreateAssetMenu(fileName = "ConsoleAsset", menuName = "Tools/Create Console Asset", order = 1)]
 [System.Serializable]
 public class ConsoleAsset : ScriptableObject {
-	
+
+	public bool searchRegex = false;
 	public bool showFile = false;
 
 	public bool collapse = false;
