@@ -163,6 +163,15 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 		}
 	}
 
+	void HightLightFile(Log log)
+	{
+		if (log.callstack != null) {
+			Object obj = AssetDatabase.LoadAssetAtPath<Object>(log.callstack.path);
+			EditorGUIUtility.PingObject(obj);
+			Selection.activeObject = obj;
+		}
+	}
+
 	#endregion //Process
 
 	#region Draw
@@ -438,6 +447,9 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 				}
 				list[i].selected = true;
 				lastClickInLog = Time.realtimeSinceStartup;
+
+				//focus on file in Project
+				HightLightFile(list[i]);
 			}
 
 			if (list[i].selected) {
