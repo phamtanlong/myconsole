@@ -484,9 +484,8 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 
 	void OnGUI()
 	{
-//		PrepareData();
-
 		DrawToolbar();
+		DrawTitleRow();
 
 		GUILayout.Space(ToolbarSpaceScrollView);
 
@@ -621,11 +620,51 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 		GUILayout.EndHorizontal();
 	}
 
+	void DrawTitleRow () {
+		GUILayout.BeginHorizontal();
+		{
+			float contentWidth = position.width - IconLogWidth;
+
+			if (logAsset.collapse) {
+				styleTitle.fixedWidth = columnCollapseWidth;
+				GUILayout.Button("N", styleTitle);
+				contentWidth -= columnCollapseWidth;
+			}
+
+			GUILayout.Button("T", styleTitle);
+
+			if (logAsset.columnTime) {
+				styleTitle.normal.textColor = new Color32(122, 51, 0, 255);
+				styleTitle.fixedWidth = columnTimeWidth;
+				GUILayout.Button("Time", styleTitle);
+				contentWidth -= columnTimeWidth;
+			}
+
+			if (logAsset.columnFrame) {
+				styleTitle.normal.textColor = Color.blue;
+				styleTitle.fixedWidth = columnFrameWidth;
+				GUILayout.Button("Frame", styleTitle);
+				contentWidth -= columnFrameWidth;
+			}
+
+			if (logAsset.columnFile) {
+				styleTitle.normal.textColor = new Color32(98, 0, 173, 255);
+				styleTitle.fixedWidth = columnFileWidth;
+				GUILayout.Button("File", styleTitle);
+				contentWidth -= columnFileWidth;
+			}
+
+			styleTitle.fixedWidth = contentWidth + 20; //hardcode
+			GUILayout.Button("Log", styleTitle);
+		}
+		GUILayout.EndHorizontal();
+	}
+
 	void DrawLogList (List<Log> list) {
 		
 		//start scrollview
 		scrollViewLogs = GUILayout.BeginScrollView(scrollViewLogs, GUIStyle.none, GUI.skin.verticalScrollbar, 
-			GUILayout.Width(position.width), GUILayout.Height(scrollViewLogsHeight - ToolbarHeight - ToolbarSpaceScrollView));
+			GUILayout.Width(position.width), GUILayout.Height(scrollViewLogsHeight - ToolbarHeight - TitleRowHeight - ToolbarSpaceScrollView));
 		
 		EditorGUI.BeginChangeCheck();
 
@@ -763,8 +802,8 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 			isResizing = false;
 		}
 
-		if (scrollViewLogsHeight < ToolbarHeight + MinScrollHeight)
-			scrollViewLogsHeight = ToolbarHeight + MinScrollHeight;
+		if (scrollViewLogsHeight < ToolbarHeight + TitleRowHeight + MinScrollHeight)
+			scrollViewLogsHeight = ToolbarHeight + TitleRowHeight + MinScrollHeight;
 		
 		if (position.height - scrollViewLogsHeight < MinDetailHeight)
 			scrollViewLogsHeight = position.height - MinDetailHeight;
@@ -788,6 +827,7 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 	const float ToolbarSpaceScrollView = 2;
 	const float SplitHeight = 4;
 	const float ToolbarHeight = 19;
+	const float TitleRowHeight = 19;
 	const float MinScrollHeight = 70;
 	const float MinDetailHeight = 80;
 
@@ -890,12 +930,13 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 		get {
 			if (_styleLogIcon == null) 
 			{
-				_styleLogIcon = new GUIStyle(GUI.skin.button);
+				_styleLogIcon = new GUIStyle(GUI.skin.box);
 				_styleLogIcon.alignment = TextAnchor.UpperLeft;
 				_styleLogIcon.fixedWidth = IconLogWidth;
 				_styleLogIcon.fixedHeight = LogHeight;
 				_styleLogIcon.padding = new RectOffset(5, 0, 0, 0);
 				_styleLogIcon.margin = new RectOffset(0, 0, 1, 1);
+				_styleLogIcon.alignment = TextAnchor.MiddleCenter;
 
 				_styleLogIcon.active.background = texLogActive;
 				_styleLogIcon.onActive.background = texLogActive;
@@ -918,6 +959,7 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 				_styleLog.padding = new RectOffset(4, 0, 0, 0);
 				_styleLog.margin = new RectOffset(0, 0, 1, 1);
 				_styleLog.richText = true;
+				_styleLog.alignment = TextAnchor.MiddleLeft;
 
 				_styleLog.active.textColor = Color.white;
 				_styleLog.active.background = texLogActive;
@@ -938,6 +980,35 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 		}
 	}
 
+	static GUIStyle _styleTitle;
+	static public GUIStyle styleTitle {
+		get {
+			if (_styleTitle == null) {
+				_styleTitle = new GUIStyle(GUI.skin.box);
+				_styleTitle.fontSize = 10;
+				_styleTitle.padding = new RectOffset(0, 0, 0, 0);
+				_styleTitle.margin = new RectOffset(0, 0, 0, 0);
+				_styleTitle.fixedHeight = TitleRowHeight;
+				_styleTitle.alignment = TextAnchor.MiddleCenter;
+//				Texture2D texOff = MakeTex(3, 3, new Color32(180, 180, 180, 255));
+//				Texture2D texOn = MakeTex(3, 3, new Color32(244, 244, 244, 255));
+//
+//				_styleTitle.normal.textColor = Color.black;
+//				_styleTitle.normal.background = texOn;
+//
+//				_styleTitle.onNormal.textColor = Color.black;
+//				_styleTitle.onNormal.background = texOff;
+//
+//				_styleTitle.active.textColor = Color.black;
+//				_styleTitle.active.background = texOff;
+//
+//				_styleTitle.onActive.textColor = Color.black;
+//				_styleTitle.onActive.background = texOn;
+			}
+			return _styleTitle;
+		}
+	}
+
 	static GUIStyle _styleToolbar;
 	static public GUIStyle styleToolbar {
 		get {
@@ -945,7 +1016,7 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 				_styleToolbar = new GUIStyle(GUI.skin.button);
 				_styleToolbar.fontSize = ToolbarFontSize;
 				_styleToolbar.margin = new RectOffset(0, 0, 2, 1);
-				_styleToolbar.fixedHeight = ToolbarHeight-3;
+				_styleToolbar.fixedHeight = ToolbarHeight - 3;
 
 				Texture2D texOff = MakeTex(3, 3, new Color32(180, 180, 180, 255));
 				_styleToolbar.normal.textColor = Color.black;
@@ -1004,7 +1075,7 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 	static public Texture2D texLogWhite {
 		get {
 			if (_texLogWhite == null) {
-				_texLogWhite = MakeTex(2, 2, new Color32(200, 200, 200, 255));
+				_texLogWhite = MakeTex(2, 2, new Color32(225, 225, 225, 255));
 			}
 			return _texLogWhite;
 		}
