@@ -128,6 +128,8 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 	int selectedDetailLine = 0;
 	float lastTimeClickInLog = 0;
 
+	bool editingDetail = false;
+
 	bool isMovingListLog = false;
 	bool isMovingListDetail = false;
 	string mylog = string.Empty;
@@ -308,12 +310,16 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 	#region Draw
 
 	void FocusMoveOnListLog () {
+		editingDetail = false;
+
 		isMovingListLog = true;
 		isMovingListDetail = false;
 		GUI.FocusControl("balah"); //do not focus on search text field
 	}
 
 	void FocusMoveOnListDetail () {
+		editingDetail = false;
+
 		isMovingListLog = false;
 		isMovingListDetail = true;
 		GUI.FocusControl("balah"); //do not focus on search text field
@@ -381,6 +387,7 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 	}
 
 	void PrepareData () {
+		editingDetail = false;
 
 		//to count collapse count
 		Dictionary<string, Log> collapseDict = new Dictionary<string, Log>();
@@ -763,50 +770,73 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 		scrollViewDetail = GUILayout.BeginScrollView(scrollViewDetail, false, false, GUIStyle.none, GUI.skin.verticalScrollbar);
 
 		if (currentLog != null) {
-			//convert to lines
-			string[] lines = (currentLog.condition + "\n" + currentLog.stackTrace.Trim()).Split('\n');
-			detailLines = new List<string>(lines);
 
-			if (selectedDetailLine >= detailLines.Count) {
-				selectedDetailLine = 0;
-			}
+			if (editingDetail) {
+				string text = currentLog.condition + "\n" + currentLog.stackTrace;
+				var newValue = GUILayout.TextArea(text);
+				if (!newValue.Equals(text)) {
+					editingDetail = false;
+				}
+			} else {
+				//convert to lines
+				string[] lines = (currentLog.condition + "\n" + currentLog.stackTrace.Trim()).Split('\n');
+				detailLines = new List<string>(lines);
 
-			EditorGUI.BeginChangeCheck();
-			int lastSelect = selectedDetailLine;
-
-			GUILayout.BeginHorizontal();
-			{
-				styleDetail.fixedWidth = position.width - 30;
-				selectedDetailLine = GUILayout.SelectionGrid(selectedDetailLine, detailLines.ToArray(), 1, styleDetail);
-				bool changeSelectedLine = EditorGUI.EndChangeCheck();
-
-				if (changeSelectedLine) {
-					FocusMoveOnListDetail();
-					CallStack callStack = LineToCallStack(detailLines[selectedDetailLine]);
-
-					//check double click to open script file
-					float deltaTime = Time.realtimeSinceStartup - lastTimeClickInDetail;
-					if (deltaTime < DoubleClickTime && lastSelect == selectedDetailLine) {
-						OpenCallStack(callStack);
-					}
-
-					lastTimeClickInDetail = Time.realtimeSinceStartup;
+				if (selectedDetailLine >= detailLines.Count) {
+					selectedDetailLine = 0;
 				}
 
-				//more
-				GUILayout.BeginVertical();
-				{
-					styleDetail.fixedWidth = 30;
-					for (int i = 0; i < detailLines.Count; i++) {
-						if (GUILayout.Button("...")) {
-							selectedDetailLine = i;
-							ShowContextMenuDetail(detailLines[i]);
+				for (int i = 0; i < detailLines.Count; i++) {
+
+					//line content here
+					bool clickedInLine = false;
+
+					//change background of line
+					if (i == selectedDetailLine) { // if is selected => BLUE background
+						styleDetail.normal.textColor = Color.white;
+						styleDetail.normal.background = texLogActive;
+
+						styleDetail.onNormal.textColor = Color.white;
+						styleDetail.onNormal.background = texLogActive;
+
+					} else { //other hand, just make caro lines
+
+						styleDetail.normal.textColor = Color.black;
+						if (i % 2 == 0)
+							styleDetail.normal.background = texLogBlack;
+						else
+							styleDetail.normal.background = texLogWhite;
+					}
+
+					clickedInLine = GUILayout.Button(detailLines[i], styleDetail);
+
+
+					//line content here
+
+					if (clickedInLine) {
+						FocusMoveOnListDetail();
+						CallStack callStack = LineToCallStack(detailLines[i]);
+
+						//check double click to open script file
+						if (i == selectedDetailLine) {
+							float deltaTime = Time.realtimeSinceStartup - lastTimeClickInDetail;
+							if (deltaTime < DoubleClickTime) {
+								OpenCallStack(callStack);
+							} else if (deltaTime < TimeEditDetail) {
+								selectedDetailLine = i;
+								editingDetail = true;
+							}
 						}
+
+						selectedDetailLine = i;
+						lastTimeClickInDetail = Time.realtimeSinceStartup;
+					}
+
+					if (clickedInLine) {
+						selectedDetailLine = i;
 					}
 				}
-				GUILayout.EndVertical();
 			}
-			GUILayout.EndHorizontal();
 		}
 
 		GUILayout.EndScrollView();
@@ -861,6 +891,8 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 	#endregion //Resizable panel
 
 	#region Constants
+
+	const float TimeEditDetail = 0.73f;
 
 	const float MincolumnCollapseWidth = 30;
 	const float MincolumnTimeWidth = 60;
