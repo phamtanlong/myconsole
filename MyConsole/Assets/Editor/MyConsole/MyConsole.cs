@@ -782,7 +782,7 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 	const int ToolbarFontSize = 9;
 	const float DoubleClickTime = 0.3f;
 	const float ToolbarButtonWidth = 35;
-	const float DetailLineHeight = 25;
+	const float DetailLineHeight = 20;
 	const float IconLogWidth = 20;
 	const float LogHeight = 33;
 	const float ToolbarSpaceScrollView = 2;
@@ -860,7 +860,7 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 		get {
 			if (_styleDetail == null) 
 			{
-				_styleDetail = new GUIStyle(GUI.skin.button);
+				_styleDetail = new GUIStyle(GUI.skin.textField);
 				_styleDetail.alignment = TextAnchor.UpperLeft;
 				_styleDetail.fixedHeight = DetailLineHeight;
 				_styleDetail.padding = new RectOffset(4, 0, 0, 0);
@@ -912,7 +912,7 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 		get {
 			if (_styleLog == null) 
 			{
-				_styleLog = new GUIStyle(GUI.skin.button);
+				_styleLog = new GUIStyle(GUI.skin.box);
 				_styleLog.alignment = TextAnchor.UpperLeft;
 				_styleLog.fixedHeight = LogHeight;
 				_styleLog.padding = new RectOffset(4, 0, 0, 0);
@@ -967,7 +967,7 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 
 	static GUIStyle _styleCollapseNumber ;
 	static public GUIStyle styleCollapseNumber {
-		get {return GUIStyle.none;//------------------
+		get {
 			if (_styleCollapseNumber == null) {
 				_styleCollapseNumber = new GUIStyle(GUI.skin.box);
 				_styleCollapseNumber.normal.background = MakeTex(2, 2, new Color(1, 1, 1, 0));

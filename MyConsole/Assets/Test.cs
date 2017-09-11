@@ -37,6 +37,38 @@ public class Test : MonoBehaviour {
 	} 
 
 	public static void log2 () {
+		log3();
+	} 
+
+	public static void log3 () {
+		log4();
+	} 
+
+	public static void log4 () {
+		log5();
+	} 
+
+	public static void log5 () {
+		log6();
+	} 
+
+	public static void log6 () {
+		log7();
+	} 
+
+	public static void log7 () {
+		log8();
+	} 
+
+	public static void log8 () {
+		log9();
+	} 
+
+	public static void log9 () {
+		log10();
+	} 
+
+	public static void log10 () {
 		Debug.Log("Alog <color=red>RED</color> This is a log " + (int)Time.realtimeSinceStartup);
 	}
 
