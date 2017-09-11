@@ -99,6 +99,18 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 
 	//list log lines
 	List<Log> visiableLogs = new List<Log>();
+	string[] arrLogContents;
+	Texture[] arrLogIcons;
+	string[] arrLogCounts;
+	string[] arrLogTimes;
+	string[] arrLogFrames;
+	string[] arrLogFiles;
+
+	float columnCollapseWidth = 40;
+	float columnTimeWidth = 40;
+	float columnFrameWidth = 40;
+	float columnFileWidth = 40;
+
 	Vector2 scrollViewDetail;
 	int selectedLogLine = 0;
 	float lastTimeClickInDetail = 0;
@@ -174,6 +186,7 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 		_styleCollapseNumber = null;
 		_styleDetail = null;
 		_styleLog = null;
+		_styleLogIcon = null;
 		_styleToolbar = null;
 		_texLogActive = null;
 		_texLogBlack = null;
@@ -238,12 +251,14 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 		if (callStack != null) {
 			var index = callStack.path.LastIndexOf("/");
 			string fileName = callStack.path.Substring(index + 1);
-			log.fileName = fileName;
+			log.file = fileName;
 		}
 
 		log.time = Time.realtimeSinceStartup;
 
 		log.frame = Time.frameCount;
+
+		log.content = LogToString(log);
 
 		logAsset.addLog(log);
 
@@ -365,8 +380,21 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 		string keySearchLower = keySearch.ToLower();
 
 		visiableLogs = new List<Log>();
+
+		var listContents = new List<string>();
+		var listIcons = new List<Texture>();
+		var listTimes = new List<string>();
+		var listFrames = new List<string>();
+		var listFiles = new List<string>();
+
+		columnCollapseWidth = 0;
+		columnTimeWidth = 0;
+		columnFrameWidth = 0;
+		columnFileWidth = 0;
+
 		foreach (var log in logAsset.logs) {
 			log.number = 1;
+			bool ok = false;
 
 			//check filter LogType: Log, Warning, Error, ...
 			if ((log.type == LogType.Log && logAsset.showLog)
@@ -399,16 +427,61 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 
 					if (collapseDict.TryGetValue(key, out lastLog)) { //already contain log => increase count
 						lastLog.number++;
+						if (lastLog.number > columnCollapseWidth)
+							columnCollapseWidth = lastLog.number;
 					} else {
 						collapseDict.Add(key, log); //new log => add to visiable logs
-						visiableLogs.Add(log);
+						ok = true;
 					}
 				} else {
-					visiableLogs.Add(log);
+					ok = true;
 				}
+			}
+
+			if (ok) {
+				visiableLogs.Add(log);
+
+				listContents.Add(log.content);
+
+				if (log.type == LogType.Log) {
+					listIcons.Add(logIcon);
+				} else if (log.type == LogType.Warning) {
+					listIcons.Add(warnIcon);
+				} else {
+					listIcons.Add(errorIcon);
+				}
+
+				string time = log.time.ToString();
+				listTimes.Add(time);
+				if (time.Length > columnTimeWidth)
+					columnTimeWidth = time.Length;
+
+				string frame = log.frame.ToString();
+				listFrames.Add(frame);
+				if (frame.Length > columnFrameWidth)
+					columnFrameWidth = frame.Length;
+				
+				listFiles.Add(log.file);
+				if (log.file.Length > columnFileWidth)
+					columnFileWidth = log.file.Length;
 			}
 		}
 
+		//todo; calculate to pixel
+		columnTimeWidth = columnTimeWidth * FontWidth + 5;
+		columnFrameWidth = columnFrameWidth * FontWidth + 5;
+		columnFileWidth = columnFileWidth * FontWidth + 5;
+		columnCollapseWidth = columnCollapseWidth.ToString().Length * FontWidth + 5;
+
+		//list to array
+		arrLogContents = listContents.ToArray();
+		arrLogIcons = listIcons.ToArray();
+		arrLogTimes = listTimes.ToArray();
+		arrLogFrames = listFrames.ToArray();
+		arrLogFiles = listFiles.ToArray();
+
+		//count collapse
+		arrLogCounts = visiableLogs.Select(x => " " + x.number.ToString()).ToArray();
 	}
 
 	void OnGUI()
@@ -543,133 +616,58 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 	}
 
 	void DrawLogList (List<Log> list) {
-
-//		float spacing = styleLog.padding.left + styleLog.padding.right + styleLog.margin.left + styleLog.margin.right;
-//
-//		//calculate size of File Column
-//		float columnFileWidth = 0;
-//		if (logAsset.columnFile && list.Count > 0) {
-//			columnFileWidth = list.Max(x => x.fileName.Length) * FontWidth + spacing;
-//		}
-//
-//		//calculate size of Time Column
-//		float columnTimeWidth = 0;
-//		if (logAsset.columnTime && list.Count > 0) {
-//			columnTimeWidth = list.Max(x => x.time.ToString().Length) * FontWidth + spacing + 5;//hardcode
-//		}
-//
-//		//calculate size of Frame Column
-//		float columnFrameWidth = 0;
-//		if (logAsset.columnFrame && list.Count > 0) {
-//			columnFrameWidth = list.Max(x => x.frame).ToString().Length * FontWidth + spacing + 5;//hardcode
-//		}
-
+		
 		//start scrollview
 		scrollViewLogs = GUILayout.BeginScrollView(scrollViewLogs, GUIStyle.none, GUI.skin.verticalScrollbar, 
 			GUILayout.Width(position.width), GUILayout.Height(scrollViewLogsHeight - ToolbarHeight - ToolbarSpaceScrollView));
-
-		var arr = list.Select(x => x.condition).ToArray();
+		
 		EditorGUI.BeginChangeCheck();
-		selectedLogLine = GUILayout.SelectionGrid(selectedLogLine, arr, 1);
+
+		GUILayout.BeginHorizontal();
+		{
+			styleLog.fixedWidth = columnCollapseWidth;
+			selectedLogLine = GUILayout.SelectionGrid(selectedLogLine, arrLogCounts, 1, styleLog);
+
+			selectedLogLine = GUILayout.SelectionGrid(selectedLogLine, arrLogIcons, 1, styleLogIcon);
+
+			styleLog.fixedWidth = columnTimeWidth;
+			selectedLogLine = GUILayout.SelectionGrid(selectedLogLine, arrLogTimes, 1, styleLog);
+
+			styleLog.fixedWidth = columnFrameWidth;
+			selectedLogLine = GUILayout.SelectionGrid(selectedLogLine, arrLogFrames, 1, styleLog);
+
+			styleLog.fixedWidth = columnFileWidth;
+			selectedLogLine = GUILayout.SelectionGrid(selectedLogLine, arrLogFiles, 1, styleLog);
+
+			styleLog.fixedWidth = position.width - columnCollapseWidth - IconLogWidth - columnTimeWidth - columnFrameWidth - columnFileWidth;
+			selectedLogLine = GUILayout.SelectionGrid(selectedLogLine, arrLogContents, 1, styleLog);
+		}
+		GUILayout.EndHorizontal();
+
 		bool changeLogLine = EditorGUI.EndChangeCheck();
-		if (changeLogLine)
+
+		if (changeLogLine) {
 			FocusMoveOnListLog();
 
-//		for (int i = 0; i < list.Count; ++i) {
+			//check double click in log line
+			float deltaTime = Time.realtimeSinceStartup - lastTimeClickInLog;
+			if (deltaTime < DoubleClickTime && list[selectedLogLine].selected) {
+				DoubleClickLog(list[selectedLogLine]);
+			}
 
-//			//change background color
-//			if (list[i].selected) { //if in selected => BLUE background
-//				styleLog.normal.textColor = Color.white;
-//				styleLog.normal.background = texLogActive;
-//
-//				styleLog.onNormal.textColor = Color.white;
-//				styleLog.onNormal.background = texLogActive;
-//
-//			} else { //if normal, just make caro lines
-//
-//				styleLog.normal.textColor = Color.black;
-//				if (i % 2 == 0)
-//					styleLog.normal.background = texLogBlack;
-//				else
-//					styleLog.normal.background = texLogWhite;
-//			}
+			list[selectedLogLine].selected = true;
 
-			bool clickedInLog = false;
+			lastTimeClickInLog = Time.realtimeSinceStartup;
 
-			//all thing in 1 log line
-//			GUILayout.BeginHorizontal();
-//			{
-//				// Collapse Number Column -----------------------
-//
-//				if (logAsset.collapse) {
-//					GUILayout.Box(list[i].number.ToString(), styleCollapseNumber, GUILayout.Width(22), GUILayout.Height(LogHeight));
-//				}
-//
-//				// Column Frame -------------------
-//
-//				if (logAsset.columnFrame) {
-//					styleLog.fixedWidth = columnFrameWidth;
-//					clickedInLog |= GUILayout.Button(list[i].frame.ToString(), styleLog, GUILayout.Height(LogHeight));
-//				}
-//
-//				// Column Time --------------------
-//
-//				if (logAsset.columnTime) {
-//					styleLog.fixedWidth = columnTimeWidth;
-//					clickedInLog |= GUILayout.Button(list[i].time.ToString(), styleLog, GUILayout.Height(LogHeight));
-//				}
-//
-//				// Column File --------------------
-//
-//				if (logAsset.columnFile) {
-//					styleLog.fixedWidth = columnFileWidth;
-//					clickedInLog |= GUILayout.Button(list[i].fileName, styleLog, GUILayout.Height(LogHeight));
-//				}
-//
-//				// Column Log Content -------------
-//
-//				styleLog.fixedWidth = position.width;
-//
-//				string logInString = LogToString(list[i]);
-//
-//				GUIContent logGuiContent;
-//				if (list[i].type == LogType.Log) {
-//					logGuiContent = new GUIContent(logInString, logIcon);
-//				} else if (list[i].type == LogType.Warning) {
-//					logGuiContent = new GUIContent(logInString, warnIcon);
-//				} else {
-//					logGuiContent = new GUIContent(logInString, errorIcon);
-//				}
+			//focus on file in Project
+			HightLightFile(list[selectedLogLine]);
 
-				//log content here
-				//clickedInLog |= GUILayout.Button(logGuiContent, styleLog);
-//				clickedInLog |= GUILayout.Label(list[i].condition, styleLog);
-				//log content here
-//			}
-//			GUILayout.EndHorizontal();
+			//deselect all other line
+			foreach (var item in list) {
+				item.selected = item == list[selectedLogLine];
+			}
+		}
 
-//			if (clickedInLog) {
-//				FocusMoveOnListLog();
-//
-//				//check double click in log line
-//				float deltaTime = Time.realtimeSinceStartup - lastTimeClickInLog;
-//				if (deltaTime < DoubleClickTime && list[i].selected) {
-//					DoubleClickLog(list[i]);
-//				}
-//				list[i].selected = true;
-//				lastTimeClickInLog = Time.realtimeSinceStartup;
-//
-//				//focus on file in Project
-//				HightLightFile(list[i]);
-//
-//				selectedLogLine = i;
-//
-//				//deselect all other line
-//				foreach (var item in list) {
-//					item.selected = item == list[i];
-//				}
-//			}
-//		}
 		GUILayout.EndScrollView();
 	}
 
@@ -792,6 +790,7 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 	const float DoubleClickTime = 0.3f;
 	const float ToolbarButtonWidth = 35;
 	const float DetailLineHeight = 20;
+	const float IconLogWidth = 20;
 	const float LogHeight = 33;
 	const float ToolbarSpaceScrollView = 2;
 	const float SplitHeight = 4;
@@ -893,27 +892,54 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 		}
 	}
 
+	static GUIStyle _styleLogIcon;
+	static public GUIStyle styleLogIcon {
+		get {
+			if (_styleLogIcon == null) 
+			{
+				_styleLogIcon = new GUIStyle(GUI.skin.button);
+				_styleLogIcon.alignment = TextAnchor.UpperLeft;
+				_styleLogIcon.fixedWidth = IconLogWidth;
+				_styleLogIcon.fixedHeight = LogHeight;
+				_styleLogIcon.padding = new RectOffset(5, 0, 0, 0);
+				_styleLogIcon.margin = new RectOffset(0, 0, 1, 1);
+
+				_styleLogIcon.active.background = texLogActive;
+				_styleLogIcon.onActive.background = texLogActive;
+				_styleLogIcon.normal.background = texLogWhite;
+				_styleLogIcon.onNormal.background = texLogActive;
+
+			}
+			return _styleLogIcon;
+		}
+	}
+
 	static GUIStyle _styleLog;
 	static public GUIStyle styleLog {
-		get {return GUIStyle.none;//------------------
+		get {
 			if (_styleLog == null) 
 			{
 				_styleLog = new GUIStyle(GUI.skin.button);
 				_styleLog.alignment = TextAnchor.UpperLeft;
 				_styleLog.fixedHeight = LogHeight;
-				_styleLog.padding = new RectOffset(5, 0, 3, 3);
-				_styleLog.margin = new RectOffset(0, 0, 0, 0);
+				_styleLog.padding = new RectOffset(0, 0, 0, 0); //new RectOffset(5, 0, 3, 3);
+				_styleLog.margin = new RectOffset(0, 0, 1, 1);
 				_styleLog.richText = true;
 
 				_styleLog.active.textColor = Color.white;
-				_styleLog.active.background = MakeTex(2, 2, new Color32(61, 128, 223, 255));
+				_styleLog.active.background = texLogActive; //MakeTex(2, 2, new Color32(61, 128, 223, 255));
 
 				_styleLog.onActive.textColor = Color.white;
-				_styleLog.onActive.background = MakeTex(2, 2, new Color32(61, 128, 223, 255));
+				_styleLog.onActive.background = texLogActive; //MakeTex(2, 2, new Color32(61, 128, 223, 255));
 
 				_styleLog.wordWrap = false;
 
-				_styleLog.border = new RectOffset(1, 1, 1, 1);
+				_styleLog.normal.textColor = Color.black;
+				_styleLog.normal.background = texLogWhite;//MakeTex(2, 2, new Color32(61, 128, 223, 255));
+
+				_styleLog.onNormal.textColor = Color.white;
+				_styleLog.onNormal.background = texLogActive;//MakeTex(2, 2, new Color32(61, 128, 223, 255));
+
 			}
 			return _styleLog;
 		}
@@ -1013,7 +1039,6 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 
 	static string LogToString (Log log) {
 		string str = log.condition + "\n" + log.stackTrace;
-		//str = str.Trim();
 		string[] strs = str.Split('\n');
 		str = SpaceBeforeText + strs[0];
 		if (strs.Length > 1)

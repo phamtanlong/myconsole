@@ -11,7 +11,7 @@ public class Test : MonoBehaviour {
 
 	[MenuItem("Test/So Many Log")]
 	public static void SoManyLog () {
-		for (int i = 0; i < 400; i++) {
+		for (int i = 0; i < 200; i++) {
 			AllLog();
 		}
 	}

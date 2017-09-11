@@ -80,14 +80,19 @@ public class CallStack {
 
 [System.Serializable]
 public class Log {
-	public int number;
-	//public bool selected;
+
+	//origin data
 	public string condition = string.Empty;
 	public string stackTrace = string.Empty;
 	public LogType type;
 
+	//calculated data
+	public bool selected;
+	public string content; //text to show in list
+	public int number;
+
 	public CallStack callstack;
-	public string fileName = string.Empty;
+	public string file = string.Empty;
 	public float time;
 	public long frame;
 
