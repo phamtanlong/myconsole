@@ -9,6 +9,8 @@ using Object = UnityEngine.Object;
 
 public class MyConsole : EditorWindow, IHasCustomMenu
 {
+	public static MyConsole Instance;
+
 	#region IHasCustomMenu implementation
 
 	public void AddItemsToMenu(GenericMenu menu)
@@ -72,6 +74,7 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 	{
 		MyConsole window = (MyConsole)EditorWindow.GetWindow(typeof(MyConsole));
 		window.Show();
+		Instance = window;
 	}
 
 	const string assetPath = "Assets/Editor/MyConsole/Resources/ConsoleAsset.asset";
@@ -106,8 +109,8 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 	int selectedDetailLine = 0;
 	float lastTimeClickInLog = 0;
 
-	bool focusMoveOnListLog = false;
-	bool focusMoveOnListDetail = false;
+	bool isMovingListLog = false;
+	bool isMovingListDetail = false;
 
 	#region Lifecycle
 
@@ -152,7 +155,9 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 	public static void OnScriptsReloaded() {
 		//Debug.Log("Compile Done");
 		var logAsset = MyConsole.LoadOrCreateAsset();
-		logAsset.logs.RemoveAll(x => x.isCompileError);
+		logAsset.removeAllCompileError();
+		if (Instance != null)
+			Instance.PrepareData();
 	}
 
 	#endregion //Lifecycle
@@ -177,7 +182,8 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 	}
 
 	void ClearData () {
-		logAsset.logs.Clear();
+		logAsset.removeAll();
+		PrepareData();
 	}
 
 	public static MyConsoleAsset LoadOrCreateAsset () {
@@ -213,7 +219,7 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 	{
 		bool isCompileError = condition.Contains("): error CS");
 		if (isCompileError) {
-			var hadIt = logAsset.logs.Any(x => x.isCompileError && x.condition.Equals(condition));
+			var hadIt = logAsset.containsCompileErrorLog(condition);
 			if (hadIt)
 				return; //do not duplicate 1 compile error
 		}
@@ -239,7 +245,9 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 
 		log.frame = Time.frameCount;
 
-		logAsset.logs.Add(log);
+		logAsset.addLog(log);
+
+		PrepareData();
 
 		if (logAsset.errorPause && (type == LogType.Exception || type == LogType.Assert)) {
 			if (EditorApplication.isPlaying) {
@@ -256,7 +264,8 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 		//clear on play
 		if (EditorApplication.isPlayingOrWillChangePlaymode) {
 			if (!EditorApplication.isPlaying) {
-				logAsset.logs.Clear();
+				logAsset.removeAll();
+				PrepareData();
 			}
 		}
 	}
@@ -272,18 +281,20 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 	#region Draw
 
 	void FocusMoveOnListLog () {
-		focusMoveOnListLog = true;
-		focusMoveOnListDetail = false;
+		isMovingListLog = true;
+		isMovingListDetail = false;
+		GUI.FocusControl("balah"); //do not focus on search text field
 	}
 
 	void FocusMoveOnListDetail () {
-		focusMoveOnListLog = false;
-		focusMoveOnListDetail = true;
+		isMovingListLog = false;
+		isMovingListDetail = true;
+		GUI.FocusControl("balah"); //do not focus on search text field
 	}
 
 	void CheckInputMoveInList () {
 		
-		if (focusMoveOnListLog) {
+		if (isMovingListLog) {
 			//Press key Up + Down in list log -------------------
 
 			if (selectedLogLine >= 0) {
@@ -292,30 +303,30 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 
 					if (Event.current.keyCode == KeyCode.UpArrow) { //move up
 						if (selectedLogLine > 0) {
-							visiableLogs[selectedLogLine].selected = false;
+							//visiableLogs[selectedLogLine].selected = false;
 							selectedLogLine = selectedLogLine - 1;
-							visiableLogs[selectedLogLine].selected = true;
+							//visiableLogs[selectedLogLine].selected = true;
 							changed = true;
 						}
 					}
 
 					if (Event.current.keyCode == KeyCode.DownArrow) { //move down
 						if (selectedLogLine < visiableLogs.Count - 1) {
-							visiableLogs[selectedLogLine].selected = false;
+							//visiableLogs[selectedLogLine].selected = false;
 							selectedLogLine = selectedLogLine + 1;
-							visiableLogs[selectedLogLine].selected = true;
+							//visiableLogs[selectedLogLine].selected = true;
 							changed = true;
 						}
 					}
 
 					//change scrollbar
-					if (changed) {
-						selectedDetailLine = 0;//reset current detail line
-						scrollViewLogs.y = selectedLogLine * LogHeight;
-					}
+//					if (changed) {
+//						selectedDetailLine = 0;//reset current detail line
+//						scrollViewLogs.y = selectedLogLine * LogHeight;
+//					}
 				}
 			}
-		} else if (focusMoveOnListDetail) {
+		} else if (isMovingListDetail) {
 			//Press key Up + Down in list detail lines -------------------
 
 			if (selectedDetailLine >= 0) {
@@ -402,7 +413,7 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 
 	void OnGUI()
 	{
-		PrepareData();
+//		PrepareData();
 
 		DrawToolbar();
 
@@ -444,13 +455,18 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 		{
 			//clear log
 			if (GUILayout.Button(" Clear ", styleToolbar)) {
-				logAsset.logs.Clear();
+				logAsset.removeAll();
+				PrepareData();
 			}
 			GUILayout.Space(1);
 
 			//collapse toggle
 			if (position.width >= MinWidthToShowCollapse) {
+				EditorGUI.BeginChangeCheck();
 				logAsset.collapse = GUILayout.Toggle(logAsset.collapse, "Collapse", styleToolbar);
+				bool changeCollapse = EditorGUI.EndChangeCheck();
+				if (changeCollapse)
+					PrepareData();
 				GUILayout.Space(1);
 			}
 
@@ -475,6 +491,7 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 				if (keySearch.EndsWith("\n")) {
 					keySearch = keySearch.TrimEnd('\n');
 				}
+				PrepareData();
 			}
 
 			//TODO: Regex search
@@ -490,6 +507,7 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 			bool clearSearch = GUILayout.Button("X", styleToolbar);
 			if (clearSearch) {
 				keySearch = string.Empty;
+				PrepareData();
 			}
 
 			GUILayout.Space(1);
@@ -497,140 +515,161 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 
 			//Log + Warning + Error (toggle + number)
 
-			GUIContent logcontent = new GUIContent("" + logAsset.logs.Count(x => x.type == LogType.Log), logIcon);
-			GUIContent warncontent = new GUIContent("" + logAsset.logs.Count(x => x.type == LogType.Warning), warnIcon);
-			GUIContent errorcontent = new GUIContent("" + logAsset.logs.Count(x => x.type != LogType.Log && x.type != LogType.Warning), errorIcon);
+			GUIContent logcontent = new GUIContent("" + logAsset.countLog, logIcon);
+			GUIContent warncontent = new GUIContent("" + logAsset.countWarn, warnIcon);
+			GUIContent errorcontent = new GUIContent("" + logAsset.countError, errorIcon);
 
+			bool changeLogType = false;
+			EditorGUI.BeginChangeCheck();
 			logAsset.showLog = GUILayout.Toggle(logAsset.showLog, logcontent, styleToolbar, GUILayout.MaxHeight(ToolbarHeight-2));
+			changeLogType |= EditorGUI.EndChangeCheck();
+
 			GUILayout.Space(1);
+
+			EditorGUI.BeginChangeCheck();
 			logAsset.showWarn = GUILayout.Toggle(logAsset.showWarn, warncontent, styleToolbar, GUILayout.MaxHeight(ToolbarHeight-2));
+			changeLogType |= EditorGUI.EndChangeCheck();
+
 			GUILayout.Space(1);
+
+			EditorGUI.BeginChangeCheck();
 			logAsset.showError = GUILayout.Toggle(logAsset.showError, errorcontent, styleToolbar, GUILayout.MaxHeight(ToolbarHeight-2));
+			changeLogType |= EditorGUI.EndChangeCheck();
+
+			if (changeLogType)
+				PrepareData();
 		}
 		GUILayout.EndHorizontal();
 	}
 
 	void DrawLogList (List<Log> list) {
 
-		float spacing = styleLog.padding.left + styleLog.padding.right + styleLog.margin.left + styleLog.margin.right;
-
-		//calculate size of File Column
-		float columnFileWidth = 0;
-		if (logAsset.columnFile && list.Count > 0) {
-			columnFileWidth = list.Max(x => x.fileName.Length) * FontWidth + spacing;
-		}
-
-		//calculate size of Time Column
-		float columnTimeWidth = 0;
-		if (logAsset.columnTime && list.Count > 0) {
-			columnTimeWidth = list.Max(x => x.time.ToString().Length) * FontWidth + spacing + 5;//hardcode
-		}
-
-		//calculate size of Frame Column
-		float columnFrameWidth = 0;
-		if (logAsset.columnFrame && list.Count > 0) {
-			columnFrameWidth = list.Max(x => x.frame).ToString().Length * FontWidth + spacing + 5;//hardcode
-		}
+//		float spacing = styleLog.padding.left + styleLog.padding.right + styleLog.margin.left + styleLog.margin.right;
+//
+//		//calculate size of File Column
+//		float columnFileWidth = 0;
+//		if (logAsset.columnFile && list.Count > 0) {
+//			columnFileWidth = list.Max(x => x.fileName.Length) * FontWidth + spacing;
+//		}
+//
+//		//calculate size of Time Column
+//		float columnTimeWidth = 0;
+//		if (logAsset.columnTime && list.Count > 0) {
+//			columnTimeWidth = list.Max(x => x.time.ToString().Length) * FontWidth + spacing + 5;//hardcode
+//		}
+//
+//		//calculate size of Frame Column
+//		float columnFrameWidth = 0;
+//		if (logAsset.columnFrame && list.Count > 0) {
+//			columnFrameWidth = list.Max(x => x.frame).ToString().Length * FontWidth + spacing + 5;//hardcode
+//		}
 
 		//start scrollview
 		scrollViewLogs = GUILayout.BeginScrollView(scrollViewLogs, GUIStyle.none, GUI.skin.verticalScrollbar, 
 			GUILayout.Width(position.width), GUILayout.Height(scrollViewLogsHeight - ToolbarHeight - ToolbarSpaceScrollView));
-		
-		for (int i = 0; i < list.Count; ++i) {
 
-			//change background color
-			if (list[i].selected) { //if in selected => BLUE background
-				styleLog.normal.textColor = Color.white;
-				styleLog.normal.background = texLogActive;
+		var arr = list.Select(x => x.condition).ToArray();
+		EditorGUI.BeginChangeCheck();
+		selectedLogLine = GUILayout.SelectionGrid(selectedLogLine, arr, 1);
+		bool changeLogLine = EditorGUI.EndChangeCheck();
+		if (changeLogLine)
+			FocusMoveOnListLog();
 
-				styleLog.onNormal.textColor = Color.white;
-				styleLog.onNormal.background = texLogActive;
+//		for (int i = 0; i < list.Count; ++i) {
 
-			} else { //if normal, just make caro lines
-
-				styleLog.normal.textColor = Color.black;
-				if (i % 2 == 0)
-					styleLog.normal.background = texLogBlack;
-				else
-					styleLog.normal.background = texLogWhite;
-			}
+//			//change background color
+//			if (list[i].selected) { //if in selected => BLUE background
+//				styleLog.normal.textColor = Color.white;
+//				styleLog.normal.background = texLogActive;
+//
+//				styleLog.onNormal.textColor = Color.white;
+//				styleLog.onNormal.background = texLogActive;
+//
+//			} else { //if normal, just make caro lines
+//
+//				styleLog.normal.textColor = Color.black;
+//				if (i % 2 == 0)
+//					styleLog.normal.background = texLogBlack;
+//				else
+//					styleLog.normal.background = texLogWhite;
+//			}
 
 			bool clickedInLog = false;
 
 			//all thing in 1 log line
-			GUILayout.BeginHorizontal();
-			{
-				// Collapse Number Column -----------------------
-
-				if (logAsset.collapse) {
-					GUILayout.Box(list[i].number.ToString(), styleCollapseNumber, GUILayout.Width(22), GUILayout.Height(LogHeight));
-				}
-
-				// Column Frame -------------------
-
-				if (logAsset.columnFrame) {
-					styleLog.fixedWidth = columnFrameWidth;
-					clickedInLog |= GUILayout.Button(list[i].frame.ToString(), styleLog, GUILayout.Height(LogHeight));
-				}
-
-				// Column Time --------------------
-
-				if (logAsset.columnTime) {
-					styleLog.fixedWidth = columnTimeWidth;
-					clickedInLog |= GUILayout.Button(list[i].time.ToString(), styleLog, GUILayout.Height(LogHeight));
-				}
-
-				// Column File --------------------
-
-				if (logAsset.columnFile) {
-					styleLog.fixedWidth = columnFileWidth;
-					clickedInLog |= GUILayout.Button(list[i].fileName, styleLog, GUILayout.Height(LogHeight));
-				}
-
-				// Column Log Content -------------
-
-				styleLog.fixedWidth = position.width;
-
-				string logInString = LogToString(list[i]);
-
-				GUIContent logGuiContent;
-				if (list[i].type == LogType.Log) {
-					logGuiContent = new GUIContent(logInString, logIcon);
-				} else if (list[i].type == LogType.Warning) {
-					logGuiContent = new GUIContent(logInString, warnIcon);
-				} else {
-					logGuiContent = new GUIContent(logInString, errorIcon);
-				}
+//			GUILayout.BeginHorizontal();
+//			{
+//				// Collapse Number Column -----------------------
+//
+//				if (logAsset.collapse) {
+//					GUILayout.Box(list[i].number.ToString(), styleCollapseNumber, GUILayout.Width(22), GUILayout.Height(LogHeight));
+//				}
+//
+//				// Column Frame -------------------
+//
+//				if (logAsset.columnFrame) {
+//					styleLog.fixedWidth = columnFrameWidth;
+//					clickedInLog |= GUILayout.Button(list[i].frame.ToString(), styleLog, GUILayout.Height(LogHeight));
+//				}
+//
+//				// Column Time --------------------
+//
+//				if (logAsset.columnTime) {
+//					styleLog.fixedWidth = columnTimeWidth;
+//					clickedInLog |= GUILayout.Button(list[i].time.ToString(), styleLog, GUILayout.Height(LogHeight));
+//				}
+//
+//				// Column File --------------------
+//
+//				if (logAsset.columnFile) {
+//					styleLog.fixedWidth = columnFileWidth;
+//					clickedInLog |= GUILayout.Button(list[i].fileName, styleLog, GUILayout.Height(LogHeight));
+//				}
+//
+//				// Column Log Content -------------
+//
+//				styleLog.fixedWidth = position.width;
+//
+//				string logInString = LogToString(list[i]);
+//
+//				GUIContent logGuiContent;
+//				if (list[i].type == LogType.Log) {
+//					logGuiContent = new GUIContent(logInString, logIcon);
+//				} else if (list[i].type == LogType.Warning) {
+//					logGuiContent = new GUIContent(logInString, warnIcon);
+//				} else {
+//					logGuiContent = new GUIContent(logInString, errorIcon);
+//				}
 
 				//log content here
-				clickedInLog |= GUILayout.Button(logGuiContent, styleLog);
+				//clickedInLog |= GUILayout.Button(logGuiContent, styleLog);
+//				clickedInLog |= GUILayout.Label(list[i].condition, styleLog);
 				//log content here
-			}
-			GUILayout.EndHorizontal();
+//			}
+//			GUILayout.EndHorizontal();
 
-			if (clickedInLog) {
-				FocusMoveOnListLog();
-				GUI.FocusControl("balah"); //do not focus on search text field
-
-				//check double click in log line
-				float deltaTime = Time.realtimeSinceStartup - lastTimeClickInLog;
-				if (deltaTime < DoubleClickTime && list[i].selected) {
-					DoubleClickLog(list[i]);
-				}
-				list[i].selected = true;
-				lastTimeClickInLog = Time.realtimeSinceStartup;
-
-				//focus on file in Project
-				HightLightFile(list[i]);
-
-				selectedLogLine = i;
-
-				//deselect all other line
-				foreach (var item in list) {
-					item.selected = item == list[i];
-				}
-			}
-		}
+//			if (clickedInLog) {
+//				FocusMoveOnListLog();
+//
+//				//check double click in log line
+//				float deltaTime = Time.realtimeSinceStartup - lastTimeClickInLog;
+//				if (deltaTime < DoubleClickTime && list[i].selected) {
+//					DoubleClickLog(list[i]);
+//				}
+//				list[i].selected = true;
+//				lastTimeClickInLog = Time.realtimeSinceStartup;
+//
+//				//focus on file in Project
+//				HightLightFile(list[i]);
+//
+//				selectedLogLine = i;
+//
+//				//deselect all other line
+//				foreach (var item in list) {
+//					item.selected = item == list[i];
+//				}
+//			}
+//		}
 		GUILayout.EndScrollView();
 	}
 
@@ -826,7 +865,7 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 
 	static GUIStyle _styleDetail;
 	static public GUIStyle styleDetail {
-		get {
+		get {return GUIStyle.none;//------------------
 			if (_styleDetail == null) 
 			{
 				_styleDetail = new GUIStyle(GUI.skin.button);
@@ -856,7 +895,7 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 
 	static GUIStyle _styleLog;
 	static public GUIStyle styleLog {
-		get {
+		get {return GUIStyle.none;//------------------
 			if (_styleLog == null) 
 			{
 				_styleLog = new GUIStyle(GUI.skin.button);
@@ -909,7 +948,7 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 
 	static GUIStyle _styleCollapseNumber ;
 	static public GUIStyle styleCollapseNumber {
-		get {
+		get {return GUIStyle.none;//------------------
 			if (_styleCollapseNumber == null) {
 				_styleCollapseNumber = new GUIStyle(GUI.skin.box);
 				_styleCollapseNumber.normal.background = MakeTex(2, 2, new Color(1, 1, 1, 0));
