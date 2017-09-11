@@ -631,6 +631,8 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 				contentWidth -= columnCollapseWidth;
 			}
 
+			contentWidth -= IconLogWidth;
+			styleTitle.fixedWidth = IconLogWidth;
 			GUILayout.Button("T", styleTitle);
 
 			if (logAsset.columnTime) {
