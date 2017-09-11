@@ -87,7 +87,7 @@ public class Log {
 	public LogType type;
 
 	//calculated data
-	public bool selected;
+	//public bool selected;
 	public string content; //text to show in list
 	public int number;
 

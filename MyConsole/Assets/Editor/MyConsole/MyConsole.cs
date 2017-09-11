@@ -123,6 +123,7 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 
 	bool isMovingListLog = false;
 	bool isMovingListDetail = false;
+	string mylog = string.Empty;
 
 	#region Lifecycle
 
@@ -318,27 +319,24 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 
 					if (Event.current.keyCode == KeyCode.UpArrow) { //move up
 						if (selectedLogLine > 0) {
-							//visiableLogs[selectedLogLine].selected = false;
 							selectedLogLine = selectedLogLine - 1;
-							//visiableLogs[selectedLogLine].selected = true;
 							changed = true;
 						}
 					}
 
 					if (Event.current.keyCode == KeyCode.DownArrow) { //move down
 						if (selectedLogLine < visiableLogs.Count - 1) {
-							//visiableLogs[selectedLogLine].selected = false;
 							selectedLogLine = selectedLogLine + 1;
-							//visiableLogs[selectedLogLine].selected = true;
 							changed = true;
 						}
 					}
 
 					//change scrollbar
-//					if (changed) {
-//						selectedDetailLine = 0;//reset current detail line
-//						scrollViewLogs.y = selectedLogLine * LogHeight;
-//					}
+					if (changed) {
+						selectedDetailLine = 0;//reset current detail line
+						//scrollViewLogs.y = selectedLogLine * LogHeight;
+						//TODO: scrollview to current selected line
+					}
 				}
 			}
 		} else if (isMovingListDetail) {
@@ -584,6 +582,14 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 			}
 
 			GUILayout.Space(1);
+			bool test = GUILayout.Button("Test", styleToolbar);
+			if (test) {
+				mylog = selectedLogLine + " => " + scrollViewLogs.y + ", " + (scrollViewLogs.y / LogHeight);
+			}
+
+			GUILayout.Label(mylog);
+
+			GUILayout.Space(1);
 			GUILayout.FlexibleSpace();
 
 			//Log + Warning + Error (toggle + number)
@@ -623,6 +629,7 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 		
 		EditorGUI.BeginChangeCheck();
 
+		int lastSelectedLogLine = selectedLogLine;
 		GUILayout.BeginHorizontal();
 		{
 			float contentWidth = position.width - IconLogWidth;
@@ -669,21 +676,14 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 
 			//check double click in log line
 			float deltaTime = Time.realtimeSinceStartup - lastTimeClickInLog;
-			if (deltaTime < DoubleClickTime && list[selectedLogLine].selected) {
+			if (deltaTime < DoubleClickTime && lastSelectedLogLine == selectedLogLine) {
 				DoubleClickLog(list[selectedLogLine]);
 			}
-
-			list[selectedLogLine].selected = true;
 
 			lastTimeClickInLog = Time.realtimeSinceStartup;
 
 			//focus on file in Project
 			HightLightFile(list[selectedLogLine]);
-
-			//deselect all other line
-			foreach (var item in list) {
-				item.selected = item == list[selectedLogLine];
-			}
 		}
 
 		GUILayout.EndScrollView();
@@ -713,46 +713,22 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 				selectedDetailLine = 0;
 			}
 
-			for (int i = 0; i < detailLines.Count; i++) {
+			EditorGUI.BeginChangeCheck();
+			int lastSelect = selectedDetailLine;
+			selectedDetailLine = GUILayout.SelectionGrid(selectedDetailLine, detailLines.ToArray(), 1, styleDetail);
+			bool changeSelectedLine = EditorGUI.EndChangeCheck();
 
-				//change background of line
-				if (i == selectedDetailLine) { // if is selected => BLUE background
-					styleDetail.normal.textColor = Color.white;
-					styleDetail.normal.background = texLogActive;
+			if (changeSelectedLine) {
+				FocusMoveOnListDetail();
+				CallStack callStack = LineToCallStack(detailLines[selectedDetailLine]);
 
-					styleDetail.onNormal.textColor = Color.white;
-					styleDetail.onNormal.background = texLogActive;
-
-				} else { //other hand, just make caro lines
-
-					styleDetail.normal.textColor = Color.black;
-					if (i % 2 == 0)
-						styleDetail.normal.background = texLogBlack;
-					else
-						styleDetail.normal.background = texLogWhite;
+				//check double click to open script file
+				float deltaTime = Time.realtimeSinceStartup - lastTimeClickInDetail;
+				if (deltaTime < DoubleClickTime && lastSelect == selectedDetailLine) {
+					OpenCallStack(callStack);
 				}
 
-				//line content here
-				bool clickedInLine = GUILayout.Button(detailLines[i], styleDetail);
-				//line content here
-
-				if (clickedInLine) {
-					FocusMoveOnListDetail();
-					CallStack callStack = LineToCallStack(detailLines[i]);
-
-					//check double click to open script file
-					float deltaTime = Time.realtimeSinceStartup - lastTimeClickInDetail;
-					if (deltaTime < DoubleClickTime && i == selectedDetailLine) {
-						OpenCallStack(callStack);
-					}
-
-					selectedDetailLine = i;
-					lastTimeClickInDetail = Time.realtimeSinceStartup;
-				}
-
-				if (clickedInLine) {
-					selectedDetailLine = i;
-				}
+				lastTimeClickInDetail = Time.realtimeSinceStartup;
 			}
 		}
 
@@ -803,11 +779,10 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 	const float MinWidthToShowErrorPause = 354;
 
 	const float FontWidth = 6.2f;
-	const string SpaceBeforeText = "  ";
 	const int ToolbarFontSize = 9;
 	const float DoubleClickTime = 0.3f;
 	const float ToolbarButtonWidth = 35;
-	const float DetailLineHeight = 20;
+	const float DetailLineHeight = 25;
 	const float IconLogWidth = 20;
 	const float LogHeight = 33;
 	const float ToolbarSpaceScrollView = 2;
@@ -882,29 +857,29 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 
 	static GUIStyle _styleDetail;
 	static public GUIStyle styleDetail {
-		get {return GUIStyle.none;//------------------
+		get {
 			if (_styleDetail == null) 
 			{
 				_styleDetail = new GUIStyle(GUI.skin.button);
 				_styleDetail.alignment = TextAnchor.UpperLeft;
 				_styleDetail.fixedHeight = DetailLineHeight;
-				_styleDetail.padding = new RectOffset(5, 0, 3, 3);
-				_styleDetail.margin = new RectOffset(0, 0, 0, 0);
+				_styleDetail.padding = new RectOffset(4, 0, 0, 0);
+				_styleDetail.margin = new RectOffset(0, 0, 1, 1);
 				_styleDetail.richText = true;
 
 				_styleDetail.active.textColor = Color.white;
-				_styleDetail.active.background = MakeTex(2, 2, new Color32(61, 128, 223, 255));
+				_styleDetail.active.background = texLogActive;
 
 				_styleDetail.onActive.textColor = Color.white;
-				_styleDetail.onActive.background = MakeTex(2, 2, new Color32(61, 128, 223, 255));
+				_styleDetail.onActive.background = texLogActive;
+
+				_styleDetail.wordWrap = true;
 
 				_styleDetail.normal.textColor = Color.black;
 				_styleDetail.normal.background = texLogWhite;
 
-				_styleDetail.onNormal.textColor = Color.black;
-				_styleDetail.onNormal.background = texLogWhite;
-				
-				_styleDetail.wordWrap = false;
+				_styleDetail.onNormal.textColor = Color.white;
+				_styleDetail.onNormal.background = texLogActive;
 			}
 			return _styleDetail;
 		}
@@ -940,23 +915,23 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 				_styleLog = new GUIStyle(GUI.skin.button);
 				_styleLog.alignment = TextAnchor.UpperLeft;
 				_styleLog.fixedHeight = LogHeight;
-				_styleLog.padding = new RectOffset(4, 0, 0, 0); //new RectOffset(5, 0, 3, 3);
+				_styleLog.padding = new RectOffset(4, 0, 0, 0);
 				_styleLog.margin = new RectOffset(0, 0, 1, 1);
 				_styleLog.richText = true;
 
 				_styleLog.active.textColor = Color.white;
-				_styleLog.active.background = texLogActive; //MakeTex(2, 2, new Color32(61, 128, 223, 255));
+				_styleLog.active.background = texLogActive;
 
 				_styleLog.onActive.textColor = Color.white;
-				_styleLog.onActive.background = texLogActive; //MakeTex(2, 2, new Color32(61, 128, 223, 255));
+				_styleLog.onActive.background = texLogActive;
 
 				_styleLog.wordWrap = false;
 
 				_styleLog.normal.textColor = Color.black;
-				_styleLog.normal.background = texLogWhite;//MakeTex(2, 2, new Color32(61, 128, 223, 255));
+				_styleLog.normal.background = texLogWhite;
 
 				_styleLog.onNormal.textColor = Color.white;
-				_styleLog.onNormal.background = texLogActive;//MakeTex(2, 2, new Color32(61, 128, 223, 255));
+				_styleLog.onNormal.background = texLogActive;
 
 			}
 			return _styleLog;
