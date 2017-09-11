@@ -468,10 +468,10 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 		}
 
 		//todo; calculate to pixel
-		columnTimeWidth = columnTimeWidth * FontWidth + 5;
-		columnFrameWidth = columnFrameWidth * FontWidth + 5;
-		columnFileWidth = columnFileWidth * FontWidth + 5;
-		columnCollapseWidth = columnCollapseWidth.ToString().Length * FontWidth + 5;
+		columnTimeWidth = columnTimeWidth * FontWidth + 8;
+		columnFrameWidth = columnFrameWidth * FontWidth + 8;
+		columnFileWidth = columnFileWidth * FontWidth + 8;
+		columnCollapseWidth = columnCollapseWidth.ToString().Length * FontWidth + 8;
 
 		//list to array
 		arrLogContents = listContents.ToArray();
@@ -481,7 +481,7 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 		arrLogFiles = listFiles.ToArray();
 
 		//count collapse
-		arrLogCounts = visiableLogs.Select(x => " " + x.number.ToString()).ToArray();
+		arrLogCounts = visiableLogs.Select(x => x.number.ToString()).ToArray();
 	}
 
 	void OnGUI()
@@ -625,21 +625,39 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 
 		GUILayout.BeginHorizontal();
 		{
-			styleLog.fixedWidth = columnCollapseWidth;
-			selectedLogLine = GUILayout.SelectionGrid(selectedLogLine, arrLogCounts, 1, styleLog);
+			float contentWidth = position.width - IconLogWidth;
+
+			if (logAsset.collapse) {
+				styleLog.fixedWidth = columnCollapseWidth;
+				selectedLogLine = GUILayout.SelectionGrid(selectedLogLine, arrLogCounts, 1, styleLog);
+				contentWidth -= columnCollapseWidth;
+			}
 
 			selectedLogLine = GUILayout.SelectionGrid(selectedLogLine, arrLogIcons, 1, styleLogIcon);
 
-			styleLog.fixedWidth = columnTimeWidth;
-			selectedLogLine = GUILayout.SelectionGrid(selectedLogLine, arrLogTimes, 1, styleLog);
+			if (logAsset.columnTime) {
+				styleLog.normal.textColor = new Color32(122, 51, 0, 255);
+				styleLog.fixedWidth = columnTimeWidth;
+				selectedLogLine = GUILayout.SelectionGrid(selectedLogLine, arrLogTimes, 1, styleLog);
+				contentWidth -= columnTimeWidth;
+			}
 
-			styleLog.fixedWidth = columnFrameWidth;
-			selectedLogLine = GUILayout.SelectionGrid(selectedLogLine, arrLogFrames, 1, styleLog);
+			if (logAsset.columnFrame) {
+				styleLog.normal.textColor = Color.blue;
+				styleLog.fixedWidth = columnFrameWidth;
+				selectedLogLine = GUILayout.SelectionGrid(selectedLogLine, arrLogFrames, 1, styleLog);
+				contentWidth -= columnFrameWidth;
+			}
 
-			styleLog.fixedWidth = columnFileWidth;
-			selectedLogLine = GUILayout.SelectionGrid(selectedLogLine, arrLogFiles, 1, styleLog);
+			if (logAsset.columnFile) {
+				styleLog.normal.textColor = new Color32(98, 0, 173, 255);
+				styleLog.fixedWidth = columnFileWidth;
+				selectedLogLine = GUILayout.SelectionGrid(selectedLogLine, arrLogFiles, 1, styleLog);
+				contentWidth -= columnFileWidth;
+			}
 
-			styleLog.fixedWidth = position.width - columnCollapseWidth - IconLogWidth - columnTimeWidth - columnFrameWidth - columnFileWidth;
+			styleLog.normal.textColor = Color.black;
+			styleLog.fixedWidth = contentWidth;
 			selectedLogLine = GUILayout.SelectionGrid(selectedLogLine, arrLogContents, 1, styleLog);
 		}
 		GUILayout.EndHorizontal();
@@ -922,7 +940,7 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 				_styleLog = new GUIStyle(GUI.skin.button);
 				_styleLog.alignment = TextAnchor.UpperLeft;
 				_styleLog.fixedHeight = LogHeight;
-				_styleLog.padding = new RectOffset(0, 0, 0, 0); //new RectOffset(5, 0, 3, 3);
+				_styleLog.padding = new RectOffset(4, 0, 0, 0); //new RectOffset(5, 0, 3, 3);
 				_styleLog.margin = new RectOffset(0, 0, 1, 1);
 				_styleLog.richText = true;
 
@@ -1040,9 +1058,9 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 	static string LogToString (Log log) {
 		string str = log.condition + "\n" + log.stackTrace;
 		string[] strs = str.Split('\n');
-		str = SpaceBeforeText + strs[0];
+		str = strs[0];
 		if (strs.Length > 1)
-			str += "\n" + SpaceBeforeText + strs[1];
+			str += "\n" + strs[1];
 
 		return str;
 	}
