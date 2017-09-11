@@ -23,14 +23,17 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 
 		menu.AddItem(new GUIContent("Columns/File"), logAsset.columnFile, () => {
 			logAsset.columnFile = ! logAsset.columnFile;
+			PrepareData();
 		});
 
 		menu.AddItem(new GUIContent("Columns/Time"), logAsset.columnTime, () => {
 			logAsset.columnTime = ! logAsset.columnTime;
+			PrepareData();
 		});
 
 		menu.AddItem(new GUIContent("Columns/Frame"), logAsset.columnFrame, () => {
 			logAsset.columnFrame = ! logAsset.columnFrame;
+			PrepareData();
 		});
 
 		menu.AddSeparator(string.Empty);
@@ -39,6 +42,7 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 
 		menu.AddItem(new GUIContent("Collapse"), logAsset.collapse, () => {
 			logAsset.collapse = ! logAsset.collapse;
+			PrepareData();
 		});
 
 		menu.AddItem(new GUIContent("Clear On Play"), logAsset.clearOnPlay, () => {
@@ -55,14 +59,17 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 
 		menu.AddItem(new GUIContent("Log"), logAsset.showLog, () => {
 			logAsset.showLog = ! logAsset.showLog;
+			PrepareData();
 		});
 
 		menu.AddItem(new GUIContent("Warning"), logAsset.showWarn, () => {
 			logAsset.showWarn = ! logAsset.showWarn;
+			PrepareData();
 		});
 
 		menu.AddItem(new GUIContent("Error"), logAsset.showError, () => {
 			logAsset.showError = ! logAsset.showError;
+			PrepareData();
 		});
 
 	}
@@ -592,8 +599,8 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 			GUILayout.Space(1);
 			bool test = GUILayout.Button("Test", styleToolbar);
 			if (test) {
-				//mylog = selectedLogLine + " => " + scrollViewLogs.y + ", " + (scrollViewLogs.y / LogHeight);
-				mylog = columnCollapseWidth + "," + columnTimeWidth + "," + columnFrameWidth + "," + columnFileWidth;
+				mylog = selectedLogLine + " => " + scrollViewLogs.y + ", " + (scrollViewLogs.y / LogHeight);
+				//mylog = columnCollapseWidth + "," + columnTimeWidth + "," + columnFrameWidth + "," + columnFileWidth;
 			}
 
 			GUILayout.Label(mylog);
@@ -735,6 +742,11 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 
 			//focus on file in Project
 			HightLightFile(list[selectedLogLine]);
+
+			//if (Event.current.) {
+			//	mylog = "click " + Event.current.button;
+			//}
+			Debug.Log(TinyJSON.Encoder.Encode(Event.current));
 		}
 
 		GUILayout.EndScrollView();
@@ -766,24 +778,54 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 
 			EditorGUI.BeginChangeCheck();
 			int lastSelect = selectedDetailLine;
-			selectedDetailLine = GUILayout.SelectionGrid(selectedDetailLine, detailLines.ToArray(), 1, styleDetail);
-			bool changeSelectedLine = EditorGUI.EndChangeCheck();
 
-			if (changeSelectedLine) {
-				FocusMoveOnListDetail();
-				CallStack callStack = LineToCallStack(detailLines[selectedDetailLine]);
+			GUILayout.BeginHorizontal();
+			{
+				styleDetail.fixedWidth = position.width - 30;
+				selectedDetailLine = GUILayout.SelectionGrid(selectedDetailLine, detailLines.ToArray(), 1, styleDetail);
+				bool changeSelectedLine = EditorGUI.EndChangeCheck();
 
-				//check double click to open script file
-				float deltaTime = Time.realtimeSinceStartup - lastTimeClickInDetail;
-				if (deltaTime < DoubleClickTime && lastSelect == selectedDetailLine) {
-					OpenCallStack(callStack);
+				if (changeSelectedLine) {
+					FocusMoveOnListDetail();
+					CallStack callStack = LineToCallStack(detailLines[selectedDetailLine]);
+
+					//check double click to open script file
+					float deltaTime = Time.realtimeSinceStartup - lastTimeClickInDetail;
+					if (deltaTime < DoubleClickTime && lastSelect == selectedDetailLine) {
+						OpenCallStack(callStack);
+					}
+
+					lastTimeClickInDetail = Time.realtimeSinceStartup;
 				}
 
-				lastTimeClickInDetail = Time.realtimeSinceStartup;
+				//more
+				GUILayout.BeginVertical();
+				{
+					styleDetail.fixedWidth = 30;
+					for (int i = 0; i < detailLines.Count; i++) {
+						if (GUILayout.Button("...")) {
+							selectedDetailLine = i;
+							ShowContextMenuDetail(detailLines[i]);
+						}
+					}
+				}
+				GUILayout.EndVertical();
 			}
+			GUILayout.EndHorizontal();
 		}
 
 		GUILayout.EndScrollView();
+	}
+
+	void ShowContextMenuDetail (string line) {
+		CallStack callStack = LineToCallStack(line);
+
+		GenericMenu menu = new GenericMenu();
+		menu.AddItem(new GUIContent("Copy"), false, () => {
+			mylog = "copy " + line;
+		});
+
+		menu.ShowAsContext();
 	}
 
 	#endregion //Draw
@@ -918,7 +960,7 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 			if (_styleDetail == null) 
 			{
 				_styleDetail = new GUIStyle(GUI.skin.textField);
-				_styleDetail.alignment = TextAnchor.UpperLeft;
+				_styleDetail.alignment = TextAnchor.MiddleLeft;
 				_styleDetail.fixedHeight = DetailLineHeight;
 				_styleDetail.padding = new RectOffset(4, 0, 0, 0);
 				_styleDetail.margin = new RectOffset(0, 0, 1, 1);
