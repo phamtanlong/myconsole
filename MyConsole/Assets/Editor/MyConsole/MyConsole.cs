@@ -742,11 +742,6 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 
 			//focus on file in Project
 			HightLightFile(list[selectedLogLine]);
-
-			//if (Event.current.) {
-			//	mylog = "click " + Event.current.button;
-			//}
-			Debug.Log(TinyJSON.Encoder.Encode(Event.current));
 		}
 
 		GUILayout.EndScrollView();
