@@ -106,10 +106,10 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 	string[] arrLogFrames;
 	string[] arrLogFiles;
 
-	float columnCollapseWidth = 40;
-	float columnTimeWidth = 40;
-	float columnFrameWidth = 40;
-	float columnFileWidth = 40;
+	float columnCollapseWidth;
+	float columnTimeWidth;
+	float columnFrameWidth;
+	float columnFileWidth;
 
 	Vector2 scrollViewDetail;
 	int selectedLogLine = 0;
@@ -129,6 +129,10 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 
 	void InitFirstTime () {
 		scrollViewLogsHeight = position.height / 2;
+		columnCollapseWidth = MincolumnCollapseWidth;
+		columnTimeWidth = MincolumnTimeWidth;
+		columnFrameWidth = MincolumnFrameWidth;
+		columnFileWidth = MincolumnFileWidth;
 	}
 
 	//start here
@@ -471,6 +475,11 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 		columnFileWidth = columnFileWidth * FontWidth + 8;
 		columnCollapseWidth = columnCollapseWidth.ToString().Length * FontWidth + 8;
 
+		columnTimeWidth = Math.Max(columnTimeWidth, MincolumnTimeWidth);
+		columnFrameWidth = Math.Max(columnFrameWidth, MincolumnFrameWidth);
+		columnFileWidth = Math.Max(columnFileWidth, MincolumnFileWidth);
+		columnCollapseWidth = Math.Max(columnCollapseWidth, MincolumnCollapseWidth);
+
 		//list to array
 		arrLogContents = listContents.ToArray();
 		arrLogIcons = listIcons.ToArray();
@@ -583,7 +592,8 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 			GUILayout.Space(1);
 			bool test = GUILayout.Button("Test", styleToolbar);
 			if (test) {
-				mylog = selectedLogLine + " => " + scrollViewLogs.y + ", " + (scrollViewLogs.y / LogHeight);
+				//mylog = selectedLogLine + " => " + scrollViewLogs.y + ", " + (scrollViewLogs.y / LogHeight);
+				mylog = columnCollapseWidth + "," + columnTimeWidth + "," + columnFrameWidth + "," + columnFileWidth;
 			}
 
 			GUILayout.Label(mylog);
@@ -814,6 +824,11 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 	#endregion //Resizable panel
 
 	#region Constants
+
+	const float MincolumnCollapseWidth = 30;
+	const float MincolumnTimeWidth = 60;
+	const float MincolumnFrameWidth = 50;
+	const float MincolumnFileWidth = 70;
 
 	const float MinWidthToShowCollapse = 471;
 	const float MinWidthToShowClearOnPlay = 421;
