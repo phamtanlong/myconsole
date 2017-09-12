@@ -657,6 +657,35 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 
 		GUILayout.BeginHorizontal();
 		{
+
+			//Log + Warning + Error (toggle + number)
+
+			GUIContent logcontent = new GUIContent("" + logAsset.countLog, logIcon);
+			GUIContent warncontent = new GUIContent("" + logAsset.countWarn, warnIcon);
+			GUIContent errorcontent = new GUIContent("" + logAsset.countError, errorIcon);
+
+			bool changeLogType = false;
+			EditorGUI.BeginChangeCheck();
+			logAsset.showLog = GUILayout.Toggle(logAsset.showLog, logcontent, styleToolbar, GUILayout.MaxHeight(ToolbarHeight-2));
+			changeLogType |= EditorGUI.EndChangeCheck();
+
+			GUILayout.Space(1);
+
+			EditorGUI.BeginChangeCheck();
+			logAsset.showWarn = GUILayout.Toggle(logAsset.showWarn, warncontent, styleToolbar, GUILayout.MaxHeight(ToolbarHeight-2));
+			changeLogType |= EditorGUI.EndChangeCheck();
+
+			GUILayout.Space(1);
+
+			EditorGUI.BeginChangeCheck();
+			logAsset.showError = GUILayout.Toggle(logAsset.showError, errorcontent, styleToolbar, GUILayout.MaxHeight(ToolbarHeight-2));
+			changeLogType |= EditorGUI.EndChangeCheck();
+
+			if (changeLogType)
+				PrepareData();
+
+			GUILayout.Space(3);
+			
 			//clear log
 			if (GUILayout.Button(" Clear ", styleToolbar)) {
 				logAsset.removeAll();
@@ -745,31 +774,6 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 			GUILayout.Space(1);
 			GUILayout.FlexibleSpace();
 
-			//Log + Warning + Error (toggle + number)
-
-			GUIContent logcontent = new GUIContent("" + logAsset.countLog, logIcon);
-			GUIContent warncontent = new GUIContent("" + logAsset.countWarn, warnIcon);
-			GUIContent errorcontent = new GUIContent("" + logAsset.countError, errorIcon);
-
-			bool changeLogType = false;
-			EditorGUI.BeginChangeCheck();
-			logAsset.showLog = GUILayout.Toggle(logAsset.showLog, logcontent, styleToolbar, GUILayout.MaxHeight(ToolbarHeight-2));
-			changeLogType |= EditorGUI.EndChangeCheck();
-
-			GUILayout.Space(1);
-
-			EditorGUI.BeginChangeCheck();
-			logAsset.showWarn = GUILayout.Toggle(logAsset.showWarn, warncontent, styleToolbar, GUILayout.MaxHeight(ToolbarHeight-2));
-			changeLogType |= EditorGUI.EndChangeCheck();
-
-			GUILayout.Space(1);
-
-			EditorGUI.BeginChangeCheck();
-			logAsset.showError = GUILayout.Toggle(logAsset.showError, errorcontent, styleToolbar, GUILayout.MaxHeight(ToolbarHeight-2));
-			changeLogType |= EditorGUI.EndChangeCheck();
-
-			if (changeLogType)
-				PrepareData();
 		}
 		GUILayout.EndHorizontal();
 	}
@@ -1218,6 +1222,25 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 				_styleTitle.alignment = TextAnchor.MiddleCenter;
 			}
 			return _styleTitle;
+		}
+	}
+
+	static GUIStyle _styleToolbarClear;
+	static public GUIStyle styleToolbarClear {
+		get {
+			if (_styleToolbar == null) {
+				_styleToolbar = new GUIStyle(_styleToolbar);
+
+				Texture2D texOff = MakeTex(3, 3, new Color32(255, 50, 50, 255));
+				Texture2D texOn = MakeTex(3, 3, new Color32(244, 244, 244, 255));
+
+				_styleToolbar.normal.background = texOff;
+				_styleToolbar.onNormal.background = texOn;
+
+				_styleToolbar.active.background = texOn;
+				_styleToolbar.onActive.background = texOff;
+			}
+			return _styleToolbar;
 		}
 	}
 
