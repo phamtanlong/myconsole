@@ -103,6 +103,7 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 	bool needPause = false;
 
 	string keySearch = string.Empty;
+	string keyIgnore = string.Empty;
 
 	//list log lines
 	List<Log> visiableLogs = new List<Log>();
@@ -393,7 +394,10 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 		Dictionary<string, Log> collapseDict = new Dictionary<string, Log>();
 
 		bool isSearching = !string.IsNullOrEmpty(keySearch);
-		string keySearchLower = keySearch.ToLower();
+		bool isIgnoring = !string.IsNullOrEmpty(keyIgnore);
+
+		string[] keySearchLowers = keySearch.ToLower().Split(Splitter);
+		string[] keyIgnoreLowers = keyIgnore.ToLower().Split(Splitter);
 
 		visiableLogs = new List<Log>();
 
@@ -417,23 +421,33 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 				|| (log.type == LogType.Warning && logAsset.showWarn)
 				|| (log.type != LogType.Log && log.type != LogType.Warning && logAsset.showError)) {
 
+				string conditionLower = log.condition.ToLower();
+
 				//check search key
 				if (isSearching) {
-					//TODO: Regex search
-					//if (logAsset.searchRegex) {
-					//	try {
-					//		Regex r = new Regex(keySearch, RegexOptions.IgnoreCase);
-					//		Match m = r.Match(log.condition);
-					//		if (!m.Success)
-					//			continue;
-					//	} catch {
-					//	}
-					//} else
-					{
-						if (!log.condition.ToLower().Contains(keySearchLower)) {
-							continue; //not match search => skip to next log
+					bool contains = false;
+					foreach (var key in keySearchLowers) {
+						if (conditionLower.Contains(key)) {
+							contains = true;
+							break;
 						}
 					}
+
+					if (!contains)
+						continue;
+				}
+
+				//check ignore
+				if (isIgnoring) {
+					bool contains = false;
+					foreach (var key in keyIgnoreLowers) {
+						if (conditionLower.Contains(key)) {
+							contains = true;
+						}
+					}
+
+					if (contains)
+						continue;
 				}
 
 				//count repeat if collapse enabled
@@ -587,6 +601,29 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 				PrepareData();
 			}
 
+			bool clearSearch = GUILayout.Button("X", styleToolbar);
+			if (clearSearch) {
+				keySearch = string.Empty;
+				PrepareData();
+			}
+
+			//ignore
+			var lastIgnoreKey = keyIgnore;
+			keyIgnore = GUILayout.TextField(keyIgnore, GUILayout.Width(100), GUILayout.Height(ToolbarHeight - 2));
+
+			if (lastIgnoreKey != keyIgnore) {
+				if (keyIgnore.EndsWith("\n")) {
+					keyIgnore = keyIgnore.TrimEnd('\n');
+				}
+				PrepareData();
+			}
+
+			bool clearIgnore = GUILayout.Button("X", styleToolbar);
+			if (clearIgnore) {
+				keyIgnore = string.Empty;
+				PrepareData();
+			}
+
 			//TODO: Regex search
 			//bool showSearchOption = GUILayout.Button("...", styleToolbarButton);
 			//if (showSearchOption) {
@@ -596,12 +633,6 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 			//	});
 			//	menu.ShowAsContext();
 			//}
-
-			bool clearSearch = GUILayout.Button("X", styleToolbar);
-			if (clearSearch) {
-				keySearch = string.Empty;
-				PrepareData();
-			}
 
 			GUILayout.Space(1);
 			bool test = GUILayout.Button("Test", styleToolbar);
@@ -892,6 +923,7 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 
 	#region Constants
 
+	const char Splitter = '`';
 	const float TimeEditDetail = 0.73f;
 
 	const float MincolumnCollapseWidth = 30;

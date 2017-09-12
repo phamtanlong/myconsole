@@ -74,7 +74,7 @@ public class Test : MonoBehaviour {
 
 	[MenuItem("Test/Warning")]
 	public static void Warning () {
-		Debug.LogWarning("This is a log warning");
+		Debug.LogWarning("This is a log warning with a And seriously, unless you are familiar with GUIScripting, just ignore trying to figure out that code for now! I will be writin");
 	}
 
 	[MenuItem("Test/Error")]
