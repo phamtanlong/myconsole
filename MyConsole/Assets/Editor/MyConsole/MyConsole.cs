@@ -120,13 +120,13 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 	float columnFileWidth;
 
 	Vector2 scrollViewDetail;
-	int selectedLogLine = 0;
+	int selectedLogLine = -1;
 	float lastTimeClickInDetail = 0;
 
 	//list detail lines
 	List<string> detailLines = new List<string>();
 	Vector2 scrollViewLogs;
-	int selectedDetailLine = 0;
+	int selectedDetailLine = -1;
 	float lastTimeClickInLog = 0;
 
 	bool editingDetail = false;
@@ -367,11 +367,18 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 	}
 
 	void CheckInputMoveInList () {
+		if (Event.current == null)
+			return;
 		
 		if (isMovingListLog) {
 			//Press key Up + Down in list log -------------------
 
 			if (selectedLogLine >= 0) {
+
+				if (Event.current.isKey && Event.current.keyCode == KeyCode.Escape) {
+					selectedLogLine = -1;
+				}
+
 				if (Event.current != null && Event.current.isKey && Event.current.type == EventType.KeyDown) {
 					bool isMoveUp = false;
 					bool isMoveDown = false;
@@ -392,7 +399,7 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 
 					//change scrollbar
 					if (isMoveUp || isMoveDown) {
-						selectedDetailLine = 0;//reset current detail line
+						selectedDetailLine = -1;//reset current detail line
 						Event.current.Use();
 
 						if (isMoveDown) {
@@ -423,6 +430,11 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 			//Press key Up + Down in list detail lines -------------------
 
 			if (selectedDetailLine >= 0) {
+
+				if (Event.current.isKey && Event.current.keyCode == KeyCode.Escape) {
+					selectedDetailLine = -1;
+				}
+
 				if (Event.current != null && Event.current.isKey && Event.current.type == EventType.KeyDown) {
 					bool isMoveUp = false;
 					bool isMoveDown = false;
@@ -901,7 +913,7 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 				detailLines = new List<string>(lines);
 
 				if (selectedDetailLine >= detailLines.Count) {
-					selectedDetailLine = 0;
+					selectedDetailLine = -1;
 				}
 
 				for (int i = 0; i < detailLines.Count; i++) {
