@@ -333,14 +333,12 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 
 			if (selectedLogLine >= 0) {
 				if (Event.current != null && Event.current.isKey && Event.current.type == EventType.KeyDown) {
-					//bool changed = false;
 					bool isMoveUp = false;
 					bool isMoveDown = false;
 
 					if (Event.current.keyCode == KeyCode.UpArrow) { //move up
 						if (selectedLogLine > 0) {
 							selectedLogLine = selectedLogLine - 1;
-							//changed = true;
 							isMoveUp = true;
 						}
 					}
@@ -348,7 +346,6 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 					if (Event.current.keyCode == KeyCode.DownArrow) { //move down
 						if (selectedLogLine < visiableLogs.Count - 1) {
 							selectedLogLine = selectedLogLine + 1;
-							//changed = true;
 							isMoveDown = true;
 						}
 					}
@@ -356,6 +353,7 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 					//change scrollbar
 					if (isMoveUp || isMoveDown) {
 						selectedDetailLine = 0;//reset current detail line
+						Event.current.Use();
 
 						if (isMoveDown) {
 							float scrollHeight = scrollViewLogsHeight - ToolbarHeight - TitleRowHeight - ToolbarSpaceScrollView;
@@ -405,7 +403,7 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 
 					//change scrollbar
 					if (isMoveUp || isMoveDown) {
-						//scrollViewDetail.y = selectedDetailLine * DetailLineHeight;
+						Event.current.Use();
 
 						if (isMoveDown) {
 							float scrollHeight = position.height - scrollViewLogsHeight - ToolbarSpaceScrollView;
