@@ -333,27 +333,51 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 
 			if (selectedLogLine >= 0) {
 				if (Event.current != null && Event.current.isKey && Event.current.type == EventType.KeyDown) {
-					bool changed = false;
+					//bool changed = false;
+					bool isMoveUp = false;
+					bool isMoveDown = false;
 
 					if (Event.current.keyCode == KeyCode.UpArrow) { //move up
 						if (selectedLogLine > 0) {
 							selectedLogLine = selectedLogLine - 1;
-							changed = true;
+							//changed = true;
+							isMoveUp = true;
 						}
 					}
 
 					if (Event.current.keyCode == KeyCode.DownArrow) { //move down
 						if (selectedLogLine < visiableLogs.Count - 1) {
 							selectedLogLine = selectedLogLine + 1;
-							changed = true;
+							//changed = true;
+							isMoveDown = true;
 						}
 					}
 
 					//change scrollbar
-					if (changed) {
+					if (isMoveUp || isMoveDown) {
 						selectedDetailLine = 0;//reset current detail line
-						//scrollViewLogs.y = selectedLogLine * LogHeight;
-						//TODO: scrollview to current selected line
+
+						if (isMoveDown) {
+							float scrollHeight = scrollViewLogsHeight - ToolbarHeight - TitleRowHeight - ToolbarSpaceScrollView;
+							float numberVisiableRow = scrollHeight / LogHeight;
+							float topLine = selectedLogLine - numberVisiableRow + 1;
+							float currentTopLine = scrollViewLogs.y / LogHeight;
+							if (topLine < currentTopLine) {
+								//nothing
+							} else {
+								float posY = topLine * LogHeight;
+								scrollViewLogs.y = posY;	
+							}
+						} else {
+							float topLine = selectedLogLine;
+							float currentTopLine = scrollViewLogs.y / LogHeight;
+							if (topLine > currentTopLine) {
+								//nothing
+							} else {
+								float posY = topLine * LogHeight;
+								scrollViewLogs.y = posY;
+							}
+						}
 					}
 				}
 			}
@@ -362,25 +386,48 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 
 			if (selectedDetailLine >= 0) {
 				if (Event.current != null && Event.current.isKey && Event.current.type == EventType.KeyDown) {
-					bool changed = false;
+					bool isMoveUp = false;
+					bool isMoveDown = false;
 
 					if (Event.current.keyCode == KeyCode.UpArrow) { //move up
 						if (selectedDetailLine > 0) {
 							selectedDetailLine--;
-							changed = true;
+							isMoveUp = true;
 						}
 					}
 
 					if (Event.current.keyCode == KeyCode.DownArrow) { //move down
 						if (selectedDetailLine < detailLines.Count - 1) {
 							selectedDetailLine++;
-							changed = true;
+							isMoveDown = true;
 						}
 					}
 
 					//change scrollbar
-					if (changed) {
-						scrollViewDetail.y = selectedDetailLine * DetailLineHeight;
+					if (isMoveUp || isMoveDown) {
+						//scrollViewDetail.y = selectedDetailLine * DetailLineHeight;
+
+						if (isMoveDown) {
+							float scrollHeight = position.height - scrollViewLogsHeight - ToolbarSpaceScrollView;
+							float numberVisiableRow = scrollHeight / DetailLineHeight;
+							float topLine = selectedDetailLine - numberVisiableRow + 1;
+							float currentTopLine = scrollViewDetail.y / DetailLineHeight;
+							if (topLine < currentTopLine) {
+								//nothing
+							} else {
+								float posY = topLine * DetailLineHeight;
+								scrollViewDetail.y = posY;	
+							}
+						} else {
+							float topLine = selectedDetailLine;
+							float currentTopLine = scrollViewDetail.y / DetailLineHeight;
+							if (topLine > currentTopLine) {
+								//nothing
+							} else {
+								float posY = topLine * DetailLineHeight;
+								scrollViewDetail.y = posY;
+							}
+						}
 					}
 				}
 			}
@@ -1023,8 +1070,11 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 				_styleDetail = new GUIStyle(GUI.skin.textField);
 				_styleDetail.alignment = TextAnchor.MiddleLeft;
 				_styleDetail.fixedHeight = DetailLineHeight;
+
 				_styleDetail.padding = new RectOffset(4, 0, 0, 0);
-				_styleDetail.margin = new RectOffset(0, 0, 1, 1);
+				_styleDetail.margin = new RectOffset(0, 0, 0, 0);
+				_styleDetail.border = new RectOffset(0, 0, 0, 0);
+
 				_styleDetail.richText = true;
 
 				_styleDetail.active.textColor = Color.white;
@@ -1054,8 +1104,11 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 				_styleLogIcon.alignment = TextAnchor.UpperLeft;
 				_styleLogIcon.fixedWidth = IconLogWidth;
 				_styleLogIcon.fixedHeight = LogHeight;
+
 				_styleLogIcon.padding = new RectOffset(5, 0, 0, 0);
-				_styleLogIcon.margin = new RectOffset(0, 0, 1, 1);
+				_styleLogIcon.margin = new RectOffset(0, 0, 0, 0);
+				_styleLogIcon.border = new RectOffset(0, 0, 0, 0);
+
 				_styleLogIcon.alignment = TextAnchor.MiddleCenter;
 
 				_styleLogIcon.active.background = texLogActive;
@@ -1076,9 +1129,12 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 				_styleLog = new GUIStyle(GUI.skin.box);
 				_styleLog.alignment = TextAnchor.UpperLeft;
 				_styleLog.fixedHeight = LogHeight;
+
 				_styleLog.padding = new RectOffset(4, 0, 0, 0);
-				_styleLog.margin = new RectOffset(0, 0, 1, 1);
+				_styleLog.margin = new RectOffset(0, 0, 0, 0);
+				_styleLog.border = new RectOffset(0, 0, 0, 0);
 				_styleLog.richText = true;
+
 				_styleLog.alignment = TextAnchor.MiddleLeft;
 
 				_styleLog.active.textColor = Color.white;
@@ -1110,20 +1166,6 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 				_styleTitle.margin = new RectOffset(0, 0, 0, 0);
 				_styleTitle.fixedHeight = TitleRowHeight;
 				_styleTitle.alignment = TextAnchor.MiddleCenter;
-//				Texture2D texOff = MakeTex(3, 3, new Color32(180, 180, 180, 255));
-//				Texture2D texOn = MakeTex(3, 3, new Color32(244, 244, 244, 255));
-//
-//				_styleTitle.normal.textColor = Color.black;
-//				_styleTitle.normal.background = texOn;
-//
-//				_styleTitle.onNormal.textColor = Color.black;
-//				_styleTitle.onNormal.background = texOff;
-//
-//				_styleTitle.active.textColor = Color.black;
-//				_styleTitle.active.background = texOff;
-//
-//				_styleTitle.onActive.textColor = Color.black;
-//				_styleTitle.onActive.background = texOn;
 			}
 			return _styleTitle;
 		}
@@ -1163,8 +1205,11 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 				_styleCollapseNumber = new GUIStyle(GUI.skin.box);
 				_styleCollapseNumber.normal.background = MakeTex(2, 2, new Color(1, 1, 1, 0));
 				_styleCollapseNumber.normal.textColor = Color.blue;
+
 				_styleCollapseNumber.margin = new RectOffset(0, 0, 0, 0);
 				_styleCollapseNumber.padding = new RectOffset(3, 3, 0, 0);
+				_styleCollapseNumber.border = new RectOffset(0, 0, 0, 0);
+
 				_styleCollapseNumber.alignment = TextAnchor.MiddleCenter;
 			}
 			return _styleCollapseNumber;

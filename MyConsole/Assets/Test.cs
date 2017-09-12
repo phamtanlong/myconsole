@@ -9,8 +9,22 @@ using Encoder = TinyJSON.Encoder;
 
 public class Test : MonoBehaviour {
 
-	[MenuItem("Test/So Many Log")]
-	public static void SoManyLog () {
+	[MenuItem("Test/Log 50")]
+	public static void Log50 () {
+		for (int i = 0; i < 50; i++) {
+			AllLog();
+		}
+	}
+
+	[MenuItem("Test/Log 100")]
+	public static void Log100 () {
+		for (int i = 0; i < 100; i++) {
+			AllLog();
+		}
+	}
+
+	[MenuItem("Test/Log 200")]
+	public static void Log200 () {
 		for (int i = 0; i < 200; i++) {
 			AllLog();
 		}
