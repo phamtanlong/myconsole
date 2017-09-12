@@ -135,10 +135,27 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 	bool isMovingListDetail = false;
 	string mylog = string.Empty;
 
+	public float GetLogPanelHeight () {
+		return topPartHeight - ToolbarHeight - TitleRowHeight - ToolbarSpaceScrollView;
+	}
+
+	public float GetDetailPanelHeight () {
+		return position.height - topPartHeight - ToolbarSpaceScrollView;	
+	}
+
+	public bool HasScrollBar () {
+		float calculateH = visiableLogs.Count * LogHeight;
+		float logPanelH = GetLogPanelHeight();
+		if (calculateH > logPanelH)
+			return true;
+		else
+			return false;
+	}
+
 	#region Lifecycle
 
 	void InitFirstTime () {
-		scrollViewLogsHeight = position.height / 2;
+		topPartHeight = position.height / 2;
 		columnCollapseWidth = MincolumnCollapseWidth;
 		columnTimeWidth = MincolumnTimeWidth;
 		columnFrameWidth = MincolumnFrameWidth;
@@ -245,6 +262,15 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 
 	void LogHandler(string condition, string stackTrace, LogType type)
 	{
+		if (condition.StartsWith("@"))
+			return;
+		
+
+
+
+
+
+
 		bool isCompileError = condition.Contains("): error CS");
 		if (isCompileError) {
 			var hadIt = logAsset.containsCompileErrorLog(condition);
@@ -282,6 +308,20 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 		if (logAsset.errorPause && (type == LogType.Exception || type == LogType.Assert)) {
 			if (EditorApplication.isPlaying) {
 				needPause = true;
+			}
+		}
+
+		CheckAutoScrollToBottom();
+	}
+
+	void CheckAutoScrollToBottom () {
+		if (HasScrollBar()) {
+			float scrollHeight = GetLogPanelHeight();
+			float numberVisiableRow = scrollHeight / LogHeight;
+			float maxTopLine = visiableLogs.Count - numberVisiableRow;
+			float currentTopLine = scrollViewLogs.y / LogHeight;
+			if (maxTopLine - currentTopLine <= 1.1f) {
+				scrollViewLogs.y = maxTopLine * LogHeight;
 			}
 		}
 	}
@@ -356,7 +396,7 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 						Event.current.Use();
 
 						if (isMoveDown) {
-							float scrollHeight = scrollViewLogsHeight - ToolbarHeight - TitleRowHeight - ToolbarSpaceScrollView;
+							float scrollHeight = GetLogPanelHeight();
 							float numberVisiableRow = scrollHeight / LogHeight;
 							float topLine = selectedLogLine - numberVisiableRow + 1;
 							float currentTopLine = scrollViewLogs.y / LogHeight;
@@ -406,7 +446,7 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 						Event.current.Use();
 
 						if (isMoveDown) {
-							float scrollHeight = position.height - scrollViewLogsHeight - ToolbarSpaceScrollView;
+							float scrollHeight = GetDetailPanelHeight();
 							float numberVisiableRow = scrollHeight / DetailLineHeight;
 							float topLine = selectedDetailLine - numberVisiableRow + 1;
 							float currentTopLine = scrollViewDetail.y / DetailLineHeight;
@@ -768,7 +808,7 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 		
 		//start scrollview
 		scrollViewLogs = GUILayout.BeginScrollView(scrollViewLogs, GUIStyle.none, GUI.skin.verticalScrollbar, 
-			GUILayout.Width(position.width), GUILayout.Height(scrollViewLogsHeight - ToolbarHeight - TitleRowHeight - ToolbarSpaceScrollView));
+			GUILayout.Width(position.width), GUILayout.Height(topPartHeight - ToolbarHeight - TitleRowHeight - ToolbarSpaceScrollView));
 		
 		EditorGUI.BeginChangeCheck();
 
@@ -935,12 +975,12 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 
 	#region Resizable panel
 
-	float scrollViewLogsHeight;
+	float topPartHeight;
 	bool isResizing = false;
 	Rect cursorChangeRect;
 
 	void ResizeScrollView(){
-		cursorChangeRect = new Rect(0, scrollViewLogsHeight, this.position.width, SplitHeight);
+		cursorChangeRect = new Rect(0, topPartHeight, this.position.width, SplitHeight);
 
 		GUI.DrawTexture(cursorChangeRect, EditorGUIUtility.whiteTexture);
 
@@ -951,19 +991,19 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 		}
 
 		if (isResizing) {
-			scrollViewLogsHeight = Event.current.mousePosition.y;
-			cursorChangeRect.Set(cursorChangeRect.x, scrollViewLogsHeight, cursorChangeRect.width, cursorChangeRect.height);
+			topPartHeight = Event.current.mousePosition.y;
+			cursorChangeRect.Set(cursorChangeRect.x, topPartHeight, cursorChangeRect.width, cursorChangeRect.height);
 		}
 
 		if (Event.current.type == EventType.MouseUp) {
 			isResizing = false;
 		}
 
-		if (scrollViewLogsHeight < ToolbarHeight + TitleRowHeight + MinScrollHeight)
-			scrollViewLogsHeight = ToolbarHeight + TitleRowHeight + MinScrollHeight;
+		if (topPartHeight < ToolbarHeight + TitleRowHeight + MinScrollHeight)
+			topPartHeight = ToolbarHeight + TitleRowHeight + MinScrollHeight;
 		
-		if (position.height - scrollViewLogsHeight < MinDetailHeight)
-			scrollViewLogsHeight = position.height - MinDetailHeight;
+		if (position.height - topPartHeight < MinDetailHeight)
+			topPartHeight = position.height - MinDetailHeight;
 	}
 
 	#endregion //Resizable panel
