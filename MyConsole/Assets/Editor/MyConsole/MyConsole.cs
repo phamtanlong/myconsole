@@ -377,6 +377,7 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 
 				if (Event.current.isKey && Event.current.keyCode == KeyCode.Escape) {
 					selectedLogLine = -1;
+					Event.current.Use();
 				}
 
 				if (Event.current != null && Event.current.isKey && Event.current.type == EventType.KeyDown) {
@@ -433,6 +434,7 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 
 				if (Event.current.isKey && Event.current.keyCode == KeyCode.Escape) {
 					selectedDetailLine = -1;
+					Event.current.Use();
 				}
 
 				if (Event.current != null && Event.current.isKey && Event.current.type == EventType.KeyDown) {
