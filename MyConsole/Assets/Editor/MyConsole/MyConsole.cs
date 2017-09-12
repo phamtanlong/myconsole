@@ -1311,7 +1311,8 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 
 	static void HightLightFile(Log log)
 	{
-		if (log.callstack != null) {
+		//only for compiling warning
+		if (log.callstack != null && log.type != LogType.Warning && string.IsNullOrEmpty(log.stackTrace)) {
 			Object obj = AssetDatabase.LoadAssetAtPath<Object>(log.callstack.path);
 			EditorGUIUtility.PingObject(obj);
 			Selection.activeObject = obj;
