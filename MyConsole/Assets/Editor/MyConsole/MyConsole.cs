@@ -396,8 +396,8 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 		bool isSearching = !string.IsNullOrEmpty(keySearch);
 		bool isIgnoring = !string.IsNullOrEmpty(keyIgnore);
 
-		string[] keySearchLowers = keySearch.ToLower().Split(Splitter);
-		string[] keyIgnoreLowers = keyIgnore.ToLower().Split(Splitter);
+		string[] keySearchLowers = keySearch.ToLower().Split(Splitter).Where(x => x.Length > 0).ToArray();
+		string[] keyIgnoreLowers = keyIgnore.ToLower().Split(Splitter).Where(x => x.Length > 0).ToArray();
 
 		visiableLogs = new List<Log>();
 
@@ -591,6 +591,7 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 
 			GUILayout.Space(1);
 			//search
+			GUILayout.Label("Filter");
 			var lastSearchKey = keySearch;
 			keySearch = GUILayout.TextField(keySearch, GUILayout.Width(100), GUILayout.Height(ToolbarHeight - 2));
 
@@ -608,6 +609,7 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 			}
 
 			//ignore
+			GUILayout.Label("Ignore");
 			var lastIgnoreKey = keyIgnore;
 			keyIgnore = GUILayout.TextField(keyIgnore, GUILayout.Width(100), GUILayout.Height(ToolbarHeight - 2));
 
