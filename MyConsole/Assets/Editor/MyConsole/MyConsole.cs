@@ -734,13 +734,13 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 			//}
 
 			GUILayout.Space(1);
-			bool test = GUILayout.Button("Test", styleToolbar);
-			if (test) {
-				mylog = selectedLogLine + " => " + scrollViewLogs.y + ", " + (scrollViewLogs.y / LogHeight);
-				//mylog = columnCollapseWidth + "," + columnTimeWidth + "," + columnFrameWidth + "," + columnFileWidth;
-			}
-
-			GUILayout.Label(mylog);
+//			bool test = GUILayout.Button("Test", styleToolbar);
+//			if (test) {
+//				mylog = selectedLogLine + " => " + scrollViewLogs.y + ", " + (scrollViewLogs.y / LogHeight);
+//				//mylog = columnCollapseWidth + "," + columnTimeWidth + "," + columnFrameWidth + "," + columnFileWidth;
+//			}
+//
+//			GUILayout.Label(mylog);
 
 			GUILayout.Space(1);
 			GUILayout.FlexibleSpace();
