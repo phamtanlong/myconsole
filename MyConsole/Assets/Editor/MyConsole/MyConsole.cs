@@ -219,7 +219,9 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 		_styleDetail = null;
 		_styleLog = null;
 		_styleLogIcon = null;
+		_styleToolbarClear = null;
 		_styleToolbar = null;
+		_styleTitle = null;
 		_texLogActive = null;
 		_texLogBlack = null;
 		_texLogWhite = null;
