@@ -264,15 +264,6 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 
 	void LogHandler(string condition, string stackTrace, LogType type)
 	{
-		if (condition.StartsWith("@"))
-			return;
-		
-
-
-
-
-
-
 		bool isCompileError = condition.Contains("): error CS");
 		if (isCompileError) {
 			var hadIt = logAsset.containsCompileErrorLog(condition);
