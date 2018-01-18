@@ -9,7 +9,7 @@ using Object = UnityEngine.Object;
 
 public class MyConsole : EditorWindow, IHasCustomMenu
 {
-	public static MyConsole Instance;
+	public static MyConsole instance;
 
 	#region IHasCustomMenu implementation
 
@@ -81,7 +81,7 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 	{
 		MyConsole window = (MyConsole)EditorWindow.GetWindow(typeof(MyConsole));
 		window.Show();
-		Instance = window;
+		instance = window;
 	}
 
 	const string assetPath = "Assets/Editor/MyConsole/Resources/ConsoleAsset.asset";
@@ -197,11 +197,12 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 
 	[UnityEditor.Callbacks.DidReloadScripts]
 	public static void OnScriptsReloaded() {
-		//Debug.Log("Compile Done");
-		var logAsset = MyConsole.LoadOrCreateAsset();
-		logAsset.removeAllCompileError();
-		if (Instance != null)
-			Instance.PrepareData();
+		//var logAsset = MyConsole.LoadOrCreateAsset();
+		//logAsset.removeAllCompileError(); //TODO: check remove compile error here
+		if (instance != null) {
+			instance.RegisterHandlers();
+			instance.PrepareData();
+		}
 	}
 
 	#endregion //Lifecycle
@@ -219,8 +220,6 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 		_styleDetail = null;
 		_styleLog = null;
 		_styleLogIcon = null;
-		_styleToolbarClear = null;
-		_styleToolbar = null;
 		_styleTitle = null;
 		_texLogActive = null;
 		_texLogBlack = null;
@@ -322,13 +321,19 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 	void PlayModeChange()
 	{
 		//reload resource
-		ClearCacheResources();
+//		ClearCacheResources();
 
 		//clear on play
+//		if (EditorApplication.isPlayingOrWillChangePlaymode) {
+//			if (!EditorApplication.isPlaying) {
+//				logAsset.removeAll();
+//				PrepareData();
+//			}
+//		}
+
 		if (EditorApplication.isPlayingOrWillChangePlaymode) {
 			if (!EditorApplication.isPlaying) {
-				logAsset.removeAll();
-				PrepareData();
+				Debug.LogError("Clear on play");
 			}
 		}
 	}
@@ -644,110 +649,99 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 	}
 
 	void DrawToolbar () {
-
-		//background of toolbar, just for beauty
-		GUI.enabled = false;
-		GUI.Box(new Rect(-5, 0, position.width + 5, ToolbarHeight), string.Empty);
-		GUI.enabled = true;
-
-		GUILayout.BeginHorizontal();
+		GUILayout.BeginHorizontal(EditorStyles.toolbar);
 		{
-
-			//Log + Warning + Error (toggle + number)
-
-			GUIContent logcontent = new GUIContent("" + logAsset.countLog, logIcon);
-			GUIContent warncontent = new GUIContent("" + logAsset.countWarn, warnIcon);
-			GUIContent errorcontent = new GUIContent("" + logAsset.countError, errorIcon);
-
-			bool changeLogType = false;
-			EditorGUI.BeginChangeCheck();
-			logAsset.showLog = GUILayout.Toggle(logAsset.showLog, logcontent, styleToolbar, GUILayout.MaxHeight(ToolbarHeight-2));
-			changeLogType |= EditorGUI.EndChangeCheck();
-
-			GUILayout.Space(1);
-
-			EditorGUI.BeginChangeCheck();
-			logAsset.showWarn = GUILayout.Toggle(logAsset.showWarn, warncontent, styleToolbar, GUILayout.MaxHeight(ToolbarHeight-2));
-			changeLogType |= EditorGUI.EndChangeCheck();
-
-			GUILayout.Space(1);
-
-			EditorGUI.BeginChangeCheck();
-			logAsset.showError = GUILayout.Toggle(logAsset.showError, errorcontent, styleToolbar, GUILayout.MaxHeight(ToolbarHeight-2));
-			changeLogType |= EditorGUI.EndChangeCheck();
-
-			if (changeLogType)
-				PrepareData();
-
-			GUILayout.Space(3);
-			
 			//clear log
-			if (GUILayout.Button(" Clear ", styleToolbarClear)) {
+			if (GUILayout.Button(" Clear ", EditorStyles.toolbarButton)) {
 				logAsset.removeAll();
 				PrepareData();
 			}
 
-			//collapse toggle
-			if (position.width >= MinWidthToShowCollapse) {
-				GUILayout.Space(1);
+			GUILayout.Space(6);
+
+			#region Toggle: Collapse, Clear on Play, Error Pause
+			{
+				//collapse toggle
 				EditorGUI.BeginChangeCheck();
-				logAsset.collapse = GUILayout.Toggle(logAsset.collapse, "Collapse", styleToolbar);
+				logAsset.collapse = GUILayout.Toggle(logAsset.collapse, "Collapse", EditorStyles.toolbarButton);
 				bool changeCollapse = EditorGUI.EndChangeCheck();
 				if (changeCollapse)
 					PrepareData();
+
+				//clear on play toggle
+				logAsset.clearOnPlay = GUILayout.Toggle(logAsset.clearOnPlay, "Clear on Play", EditorStyles.toolbarButton);
+
+				//error pause toggle
+				logAsset.errorPause = GUILayout.Toggle(logAsset.errorPause, "Error Pause", EditorStyles.toolbarButton);
 			}
+			#endregion
 
-			//clear on play toggle
-			if (position.width >= MinWidthToShowClearOnPlay) {
-				GUILayout.Space(1);
-				logAsset.clearOnPlay = GUILayout.Toggle(logAsset.clearOnPlay, "ClearOnPlay", styleToolbar);
-			}
+			#region Search Filter
+			{
+				var searchFieldToolbarStyle = GUI.skin.FindStyle("ToolbarSeachTextField");
+				var cancelToolbarStyle = GUI.skin.FindStyle("ToolbarSeachCancelButton");
+				GUILayout.Label("+");
+				var lastSearchKey = keySearch;
+				keySearch = GUILayout.TextField(keySearch, searchFieldToolbarStyle, GUILayout.Width(100));
 
-			//error pause toggle
-			//if (position.width >= MinWidthToShowErrorPause) {
-			//	GUILayout.Space(1);
-			//	logAsset.errorPause = GUILayout.Toggle(logAsset.errorPause, "ErrorPause", styleToolbar);
-			//	GUILayout.Space(1);
-			//}
-
-			GUILayout.Space(1);
-			//search
-			GUILayout.Label("+");
-			var lastSearchKey = keySearch;
-			keySearch = GUILayout.TextArea(keySearch, GUILayout.Width(100), GUILayout.Height(ToolbarHeight - 2));
-
-			if (lastSearchKey != keySearch) {
-				if (keySearch.EndsWith("\n")) {
-					keySearch = keySearch.TrimEnd('\n');
+				if (lastSearchKey != keySearch) {
+					if (keySearch.EndsWith("\n")) {
+						keySearch = keySearch.TrimEnd('\n');
+					}
+					PrepareData();
 				}
-				PrepareData();
-			}
 
-			//bool clearSearch = GUILayout.Button("X", styleToolbar);
-			//if (clearSearch) {
-			//	keySearch = string.Empty;
-			//	PrepareData();
-			//}
-
-			//ignore
-			GUILayout.Label("-");
-			var lastIgnoreKey = keyIgnore;
-			keyIgnore = GUILayout.TextArea(keyIgnore, GUILayout.Width(100), GUILayout.Height(ToolbarHeight - 2));
-
-			if (lastIgnoreKey != keyIgnore) {
-				if (keyIgnore.EndsWith("\n")) {
-					keyIgnore = keyIgnore.TrimEnd('\n');
+				bool clearSearch = GUILayout.Button("X", cancelToolbarStyle);
+				if (clearSearch) {
+					keySearch = string.Empty;
+					PrepareData();
 				}
-				PrepareData();
-			}
 
-			//bool clearIgnore = GUILayout.Button("X", styleToolbar);
-			//if (clearIgnore) {
-			//	keyIgnore = string.Empty;
-			//	PrepareData();
-			//}
+				//ignore
+				GUILayout.Label("-");
+				var lastIgnoreKey = keyIgnore;
+				keyIgnore = GUILayout.TextField(keyIgnore, searchFieldToolbarStyle, GUILayout.Width(100));
+
+				if (lastIgnoreKey != keyIgnore) {
+					if (keyIgnore.EndsWith("\n")) {
+						keyIgnore = keyIgnore.TrimEnd('\n');
+					}
+					PrepareData();
+				}
+
+				bool clearIgnore = GUILayout.Button("X", cancelToolbarStyle);
+				if (clearIgnore) {
+					keyIgnore = string.Empty;
+					PrepareData();
+				}
+			}
+			#endregion
 
 			GUILayout.FlexibleSpace();
+
+			#region Log - Warning - Error
+			{
+				GUIContent logcontent = new GUIContent("" + logAsset.countLog, logIcon);
+				GUIContent warncontent = new GUIContent("" + logAsset.countWarn, warnIcon);
+				GUIContent errorcontent = new GUIContent("" + logAsset.countError, errorIcon);
+
+				bool changeLogType = false;
+				EditorGUI.BeginChangeCheck();
+				logAsset.showLog = GUILayout.Toggle(logAsset.showLog, logcontent, EditorStyles.toolbarButton, GUILayout.MaxHeight(ToolbarHeight-2));
+				changeLogType |= EditorGUI.EndChangeCheck();
+
+				EditorGUI.BeginChangeCheck();
+				logAsset.showWarn = GUILayout.Toggle(logAsset.showWarn, warncontent, EditorStyles.toolbarButton, GUILayout.MaxHeight(ToolbarHeight-2));
+				changeLogType |= EditorGUI.EndChangeCheck();
+
+				EditorGUI.BeginChangeCheck();
+				logAsset.showError = GUILayout.Toggle(logAsset.showError, errorcontent, EditorStyles.toolbarButton, GUILayout.MaxHeight(ToolbarHeight-2));
+				changeLogType |= EditorGUI.EndChangeCheck();
+
+				if (changeLogType)
+					PrepareData();
+			}
+			#endregion
 		}
 		GUILayout.EndHorizontal();
 	}
@@ -972,7 +966,7 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 	void ResizeScrollView(){
 		cursorChangeRect = new Rect(0, topPartHeight, this.position.width, SplitHeight);
 
-		GUI.DrawTexture(cursorChangeRect, EditorGUIUtility.whiteTexture);
+		GUI.DrawTexture(cursorChangeRect, texSeperator);//EditorGUIUtility.whiteTexture);
 
 		EditorGUIUtility.AddCursorRect(cursorChangeRect, MouseCursor.ResizeVertical);
 
@@ -1007,10 +1001,6 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 	const float MincolumnTimeWidth = 60;
 	const float MincolumnFrameWidth = 50;
 	const float MincolumnFileWidth = 70;
-
-	const float MinWidthToShowCollapse = 471;
-	const float MinWidthToShowClearOnPlay = 421;
-	const float MinWidthToShowErrorPause = 354;
 
 	const float FontWidth = 6.2f;
 	const int ToolbarFontSize = 9;
@@ -1199,52 +1189,6 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 		}
 	}
 
-	static GUIStyle _styleToolbarClear;
-	static public GUIStyle styleToolbarClear {
-		get {
-			if (_styleToolbarClear == null) {
-				_styleToolbarClear = new GUIStyle(styleToolbar);
-
-				Texture2D texOff = MakeTex(3, 3, new Color32(255, 50, 50, 255));
-				Texture2D texOn = MakeTex(3, 3, new Color32(255, 200, 200, 255));
-
-				_styleToolbarClear.normal.background = texOff;
-				_styleToolbarClear.onNormal.background = texOn;
-
-				_styleToolbarClear.active.background = texOn;
-				_styleToolbarClear.onActive.background = texOff;
-			}
-			return _styleToolbarClear;
-		}
-	}
-
-	static GUIStyle _styleToolbar;
-	static public GUIStyle styleToolbar {
-		get {
-			if (_styleToolbar == null) {
-				_styleToolbar = new GUIStyle(GUI.skin.button);
-				_styleToolbar.fontSize = ToolbarFontSize;
-				_styleToolbar.margin = new RectOffset(0, 0, 2, 1);
-				_styleToolbar.fixedHeight = ToolbarHeight - 3;
-
-				Texture2D texOff = MakeTex(3, 3, new Color32(180, 180, 180, 255));
-				_styleToolbar.normal.textColor = Color.black;
-				_styleToolbar.normal.background = texOff;
-
-				Texture2D texOn = MakeTex(3, 3, new Color32(244, 244, 244, 255));
-				_styleToolbar.onNormal.textColor = Color.black;
-				_styleToolbar.onNormal.background = texOn;
-
-				_styleToolbar.active.textColor = Color.black;
-				_styleToolbar.active.background = texOn;
-
-				_styleToolbar.onActive.textColor = Color.black;
-				_styleToolbar.onActive.background = texOff;
-			}
-			return _styleToolbar;
-		}
-	}
-
 	static GUIStyle _styleCollapseNumber ;
 	static public GUIStyle styleCollapseNumber {
 		get {
@@ -1290,6 +1234,15 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 				_texLogWhite = MakeTex(2, 2, new Color32(225, 225, 225, 255));
 			}
 			return _texLogWhite;
+		}
+	}
+
+	static Texture2D _texSeperator;
+	static public Texture2D texSeperator {
+		get {
+			if (_texSeperator == null)
+				_texSeperator = MakeTex(2, 2, new Color32(0, 0, 0, 255));
+			return _texSeperator;
 		}
 	}
 
