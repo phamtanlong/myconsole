@@ -745,37 +745,38 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 
 			if (logAsset.collapse) {
 				styleTitle.fixedWidth = columnCollapseWidth;
-				GUILayout.Button("N", styleTitle);
+				GUILayout.Box("No", styleTitle);
 				contentWidth -= columnCollapseWidth;
 			}
 
 			contentWidth -= IconLogWidth;
 			styleTitle.fixedWidth = IconLogWidth;
-			GUILayout.Button("T", styleTitle);
+			GUILayout.Box("T", styleTitle);
 
 			if (logAsset.columnTime) {
 				styleTitle.normal.textColor = new Color32(122, 51, 0, 255);
-				styleTitle.fixedWidth = columnTimeWidth;
-				GUILayout.Button("Time", styleTitle);
+				styleTitle.fixedWidth = columnTimeWidth + 2;
+				GUILayout.Box("Time", styleTitle);
 				contentWidth -= columnTimeWidth;
 			}
 
 			if (logAsset.columnFrame) {
 				styleTitle.normal.textColor = Color.blue;
-				styleTitle.fixedWidth = columnFrameWidth;
-				GUILayout.Button("Frame", styleTitle);
+				styleTitle.fixedWidth = columnFrameWidth + 2;
+				GUILayout.Box("Frame", styleTitle);
 				contentWidth -= columnFrameWidth;
 			}
 
 			if (logAsset.columnFile) {
 				styleTitle.normal.textColor = new Color32(98, 0, 173, 255);
-				styleTitle.fixedWidth = columnFileWidth;
-				GUILayout.Button("File", styleTitle);
+				styleTitle.fixedWidth = columnFileWidth + 2;
+				GUILayout.Box("File", styleTitle);
 				contentWidth -= columnFileWidth;
 			}
 
-			styleTitle.fixedWidth = contentWidth + 20; //hardcode
-			GUILayout.Button("Log", styleTitle);
+			styleTitle.normal.textColor = Color.black;
+			styleTitle.fixedWidth = contentWidth + 40; //hardcode
+			GUILayout.Box("Log", styleTitle);
 		}
 		GUILayout.EndHorizontal();
 	}
@@ -1004,7 +1005,7 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 	const float DetailLineHeight = 20;
 	const float IconLogWidth = 26;
 	const float LogHeight = 33;
-	const float ToolbarSpaceScrollView = 2;
+	const float ToolbarSpaceScrollView = 0;
 	const float SplitHeight = 4;
 	const float ToolbarHeight = 19;
 	const float TitleRowHeight = 19;
