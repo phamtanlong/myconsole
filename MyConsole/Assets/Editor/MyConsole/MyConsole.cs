@@ -621,7 +621,8 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 
 			ResizeScrollView();
 
-			GUILayout.Space(ToolbarSpaceScrollView);
+			GUILayout.Space(ToolbarSpaceScrollView2);
+			GUILayout.Space(ToolbarSpaceScrollView2);
 
 			DrawDetail(visiableLogs);
 		}
@@ -958,11 +959,13 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 	float topPartHeight;
 	bool isResizing = false;
 	Rect cursorChangeRect;
+	Rect cursorChangeRectDraw;
 
 	void ResizeScrollView(){
 		cursorChangeRect = new Rect(0, topPartHeight, this.position.width, SplitHeight);
+		cursorChangeRectDraw = new Rect(0, topPartHeight, this.position.width, 2);
 
-		GUI.DrawTexture(cursorChangeRect, texSeperator);//EditorGUIUtility.whiteTexture);
+		GUI.DrawTexture(cursorChangeRectDraw, texSeperator);//EditorGUIUtility.whiteTexture);
 
 		EditorGUIUtility.AddCursorRect(cursorChangeRect, MouseCursor.ResizeVertical);
 
@@ -1006,6 +1009,7 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 	const float IconLogWidth = 26;
 	const float LogHeight = 33;
 	const float ToolbarSpaceScrollView = 0;
+	const float ToolbarSpaceScrollView2 = 3;
 	const float SplitHeight = 4;
 	const float ToolbarHeight = 19;
 	const float TitleRowHeight = 19;
@@ -1189,7 +1193,7 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 	static public Texture2D texSeperator {
 		get {
 			if (_texSeperator == null)
-				_texSeperator = MakeTex(2, 2, new Color32(0, 0, 0, 255));
+				_texSeperator = MakeTex(1, 1, new Color32(100, 100, 100, 255));
 			return _texSeperator;
 		}
 	}
