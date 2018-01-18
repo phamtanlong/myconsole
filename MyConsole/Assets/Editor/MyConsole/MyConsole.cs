@@ -21,17 +21,17 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 
 		// Column settings
 
-		menu.AddItem(new GUIContent("Columns/File"), logAsset.columnFile, () => {
+		menu.AddItem(new GUIContent("Column File"), logAsset.columnFile, () => {
 			logAsset.columnFile = ! logAsset.columnFile;
 			PrepareData();
 		});
 
-		menu.AddItem(new GUIContent("Columns/Time"), logAsset.columnTime, () => {
+		menu.AddItem(new GUIContent("Column Time"), logAsset.columnTime, () => {
 			logAsset.columnTime = ! logAsset.columnTime;
 			PrepareData();
 		});
 
-		menu.AddItem(new GUIContent("Columns/Frame"), logAsset.columnFrame, () => {
+		menu.AddItem(new GUIContent("Column Frame"), logAsset.columnFrame, () => {
 			logAsset.columnFrame = ! logAsset.columnFrame;
 			PrepareData();
 		});
@@ -210,21 +210,18 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 	#region Process
 
 	void ClearCacheResources () {
-		_border1 = null;
-		_border2 = null;
-		_borderSelected = null;
-		_errorIcon = null;
-		_logAsset = null;
-		_logIcon = null;
-		_styleCollapseNumber = null;
-		_styleDetail = null;
+//		_errorIcon = null;
+//		_logAsset = null;
+//		_logIcon = null;
+//		_styleCollapseNumber = null;
+//		_styleDetail = null;
 		_styleLog = null;
-		_styleLogIcon = null;
-		_styleTitle = null;
-		_texLogActive = null;
-		_texLogBlack = null;
-		_texLogWhite = null;
-		_warnIcon = null;
+//		_styleLogIcon = null;
+//		_styleTitle = null;
+//		_texLogActive = null;
+//		_texLogBlack = null;
+//		_texLogWhite = null;
+//		_warnIcon = null;
 	}
 
 	void ClearData () {
@@ -321,19 +318,14 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 	void PlayModeChange()
 	{
 		//reload resource
-//		ClearCacheResources();
+		ClearCacheResources();
 
 		//clear on play
-//		if (EditorApplication.isPlayingOrWillChangePlaymode) {
-//			if (!EditorApplication.isPlaying) {
-//				logAsset.removeAll();
-//				PrepareData();
-//			}
-//		}
-
 		if (EditorApplication.isPlayingOrWillChangePlaymode) {
 			if (!EditorApplication.isPlaying) {
 				Debug.LogError("Clear on play");
+				logAsset.removeAll();
+				PrepareData();
 			}
 		}
 	}
@@ -791,8 +783,11 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 	void DrawLogList (List<Log> list) {
 		
 		//start scrollview
-		scrollViewLogs = GUILayout.BeginScrollView(scrollViewLogs, GUIStyle.none, GUI.skin.verticalScrollbar, 
-			GUILayout.Width(position.width), GUILayout.Height(topPartHeight - ToolbarHeight - TitleRowHeight - ToolbarSpaceScrollView));
+		scrollViewLogs = GUILayout.BeginScrollView(scrollViewLogs, 
+			GUIStyle.none, 
+			GUI.skin.verticalScrollbar,
+			GUILayout.Width(position.width),
+			GUILayout.Height(topPartHeight - ToolbarHeight - TitleRowHeight - ToolbarSpaceScrollView));
 		
 		EditorGUI.BeginChangeCheck();
 
@@ -1007,7 +1002,7 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 	const float DoubleClickTime = 0.3f;
 	const float ToolbarButtonWidth = 35;
 	const float DetailLineHeight = 20;
-	const float IconLogWidth = 20;
+	const float IconLogWidth = 26;
 	const float LogHeight = 33;
 	const float ToolbarSpaceScrollView = 2;
 	const float SplitHeight = 4;
@@ -1019,36 +1014,6 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 	#endregion //Constants
 
 	#region Resources Cache
-
-	static Texture2D _border1;
-	static public Texture2D border1 {
-		get {
-			if (_border1 == null) {
-				_border1 = Resources.Load("border") as Texture2D;
-			}
-			return _border1;
-		}
-	}
-
-	static Texture2D _border2;
-	static public Texture2D border2 {
-		get {
-			if (_border2 == null) {
-				_border2 = Resources.Load("border") as Texture2D;
-			}
-			return _border2;
-		}
-	}
-
-	static Texture2D _borderSelected;
-	static public Texture2D borderSelected {
-		get {
-			if (_borderSelected == null) {
-				_borderSelected = Resources.Load("border") as Texture2D;
-			}
-			return _borderSelected;
-		}
-	}
 
 	static Texture _logIcon;
 	static public Texture logIcon {
@@ -1116,15 +1081,15 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 	static GUIStyle _styleLogIcon;
 	static public GUIStyle styleLogIcon {
 		get {
-			if (_styleLogIcon == null) 
+			//if (_styleLogIcon == null) 
 			{
 				_styleLogIcon = new GUIStyle(GUI.skin.box);
 				_styleLogIcon.alignment = TextAnchor.UpperLeft;
 				_styleLogIcon.fixedWidth = IconLogWidth;
 				_styleLogIcon.fixedHeight = LogHeight;
 
-				_styleLogIcon.padding = new RectOffset(5, 0, 0, 0);
-				_styleLogIcon.margin = new RectOffset(0, 0, 0, 0);
+				_styleLogIcon.padding = new RectOffset(3, 0, 0, 0);
+				_styleLogIcon.margin = new RectOffset(0, 1, 0, 1);
 				_styleLogIcon.border = new RectOffset(0, 0, 0, 0);
 
 				_styleLogIcon.alignment = TextAnchor.MiddleCenter;
@@ -1149,7 +1114,7 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 				_styleLog.fixedHeight = LogHeight;
 
 				_styleLog.padding = new RectOffset(4, 0, 0, 0);
-				_styleLog.margin = new RectOffset(0, 0, 0, 0);
+				_styleLog.margin = new RectOffset(0, 1, 0, 1);
 				_styleLog.border = new RectOffset(0, 0, 0, 0);
 				_styleLog.richText = true;
 
@@ -1186,24 +1151,6 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 				_styleTitle.alignment = TextAnchor.MiddleCenter;
 			}
 			return _styleTitle;
-		}
-	}
-
-	static GUIStyle _styleCollapseNumber ;
-	static public GUIStyle styleCollapseNumber {
-		get {
-			if (_styleCollapseNumber == null) {
-				_styleCollapseNumber = new GUIStyle(GUI.skin.box);
-				_styleCollapseNumber.normal.background = MakeTex(2, 2, new Color(1, 1, 1, 0));
-				_styleCollapseNumber.normal.textColor = Color.blue;
-
-				_styleCollapseNumber.margin = new RectOffset(0, 0, 0, 0);
-				_styleCollapseNumber.padding = new RectOffset(3, 3, 0, 0);
-				_styleCollapseNumber.border = new RectOffset(0, 0, 0, 0);
-
-				_styleCollapseNumber.alignment = TextAnchor.MiddleCenter;
-			}
-			return _styleCollapseNumber;
 		}
 	}
 
