@@ -323,9 +323,7 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 		//clear on play
 		if (EditorApplication.isPlayingOrWillChangePlaymode) {
 			if (!EditorApplication.isPlaying) {
-				Debug.LogError("Clear on play");
-				logAsset.removeAll();
-				PrepareData();
+				Clear();
 			}
 		}
 	}
@@ -334,6 +332,11 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 	{
 		//open file in script editor
 		OpenCallStack(log.callstack);
+	}
+
+	void Clear () {
+		logAsset.removeAll();
+		PrepareData();
 	}
 
 	#endregion //Process
@@ -645,9 +648,8 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 		GUILayout.BeginHorizontal(EditorStyles.toolbar);
 		{
 			//clear log
-			if (GUILayout.Button(" Clear ", EditorStyles.toolbarButton)) {
-				logAsset.removeAll();
-				PrepareData();
+			if (GUILayout.Button("Clear", EditorStyles.toolbarButton)) {
+				Clear();
 			}
 
 			GUILayout.Space(6);
@@ -717,6 +719,7 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 				GUIContent logcontent = new GUIContent("" + logAsset.countLog, logIcon);
 				GUIContent warncontent = new GUIContent("" + logAsset.countWarn, warnIcon);
 				GUIContent errorcontent = new GUIContent("" + logAsset.countError, errorIcon);
+				GUIContent errorNoneContent = new GUIContent("0", errorIconInactive);
 
 				bool changeLogType = false;
 				EditorGUI.BeginChangeCheck();
@@ -728,7 +731,10 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 				changeLogType |= EditorGUI.EndChangeCheck();
 
 				EditorGUI.BeginChangeCheck();
-				logAsset.showError = GUILayout.Toggle(logAsset.showError, errorcontent, EditorStyles.toolbarButton, GUILayout.MaxHeight(ToolbarHeight-2));
+				if (logAsset.countError > 0)
+					logAsset.showError = GUILayout.Toggle(logAsset.showError, errorcontent, EditorStyles.toolbarButton, GUILayout.MaxHeight(ToolbarHeight-2));
+				else
+					logAsset.showError = GUILayout.Toggle(logAsset.showError, errorNoneContent, EditorStyles.toolbarButton, GUILayout.MaxHeight(ToolbarHeight-2));
 				changeLogType |= EditorGUI.EndChangeCheck();
 
 				if (changeLogType)
@@ -830,6 +836,7 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 			styleLog.normal.textColor = Color.black;
 			styleLog.fixedWidth = contentWidth;
 			selectedLogLine = GUILayout.SelectionGrid(selectedLogLine, arrLogContents, 1, styleLog);
+
 		}
 		GUILayout.EndHorizontal();
 
@@ -908,6 +915,8 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 					}
 
 					clickedInLine = GUILayout.Button(detailLines[i], styleDetail);
+					//clickedInLine = 
+					//EditorGUILayout.SelectableLabel(detailLines[i]);//, styleDetail);
 
 
 					//line content here
@@ -1024,7 +1033,9 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 	static public Texture logIcon {
 		get {
 			if (_logIcon == null) {
-				_logIcon = Resources.Load("log") as Texture;
+				//_logIcon = Resources.Load("log") as Texture;
+				_logIcon = EditorGUIUtility.Load("console.infoicon.sml") as Texture;
+				//EditorGUIUtility.Load("console.infoicon") as Texture;
 			}
 			return _logIcon;
 		}
@@ -1034,7 +1045,8 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 	static public Texture warnIcon {
 		get {
 			if (_warnIcon == null) {
-				_warnIcon = Resources.Load("warn") as Texture;
+				//_warnIcon = Resources.Load("warn") as Texture;
+				_warnIcon = EditorGUIUtility.Load("console.warnicon.sml") as Texture;
 			}
 			return _warnIcon;
 		}
@@ -1044,9 +1056,21 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 	static public Texture errorIcon {
 		get {
 			if (_errorIcon == null) {
-				_errorIcon = Resources.Load("error") as Texture;
+				//_errorIcon = Resources.Load("error") as Texture;
+				_errorIcon = EditorGUIUtility.Load("console.erroricon.sml") as Texture;
 			}
 			return _errorIcon;
+		}
+	}
+
+	static Texture _errorIconInactive;
+	static public Texture errorIconInactive {
+		get {
+			if (_errorIconInactive == null) {
+				//_errorIcon = Resources.Load("error") as Texture;
+				_errorIconInactive = EditorGUIUtility.Load("console.erroricon.inactive.sml") as Texture;
+			}
+			return _errorIconInactive;
 		}
 	}
 

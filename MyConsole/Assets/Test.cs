@@ -6,6 +6,7 @@ using System;
 using System.Linq;
 using System.Reflection;
 using Encoder = TinyJSON.Encoder;
+using Decoder = TinyJSON.Decoder;
 
 public class Test : MonoBehaviour {
 
@@ -122,27 +123,71 @@ public class Test : MonoBehaviour {
 		Type logEntries = assembly.GetType("UnityEditorInternal.LogEntries");
 		logEntries.GetMethod("Clear").Invoke (new object (), null);
 
-		//Debug.Log(Encoder.Encode(logEntries));
-		var mems = logEntries.GetMembers();
-		foreach (var mem in mems.Where(x => x.MemberType == MemberTypes.Method)) {
-			Debug.Log(mem.MemberType + ": " + mem.Name + " => " + ((MethodInfo)mem).ReturnType);
-		}
-
-		Debug.Log("--------");
-
-		var method = logEntries.GetMethod("GetEntryCount");
-		var paras = method.GetParameters();
-		foreach (var para in paras) {
-			Debug.Log(para.ParameterType + ": " + para.Name);
-		}
-
-		Debug.Log("return " + method.ReturnType);
+//		//Debug.Log(Encoder.Encode(logEntries));
+//		var mems = logEntries.GetMembers(BindingFlags.NonPublic);
+//		foreach (var mem in mems.Where(x => x.MemberType == MemberTypes.Method)) {
+//			Debug.Log(mem.MemberType + ": " + mem.Name + " => " + ((MethodInfo)mem).ReturnType);
+//		}
+//
+//		Debug.Log("--------");
+//
+//		var method = logEntries.GetMethod("GetEntryCount");
+//		var paras = method.GetParameters();
+//		foreach (var para in paras) {
+//			Debug.Log(para.ParameterType + ": " + para.Name);
+//		}
+//
+//		Debug.Log("return " + method.ReturnType);
 
 		int count = (int)logEntries.GetMethod("GetCount").Invoke(new object (), null);
 
-		//if (count > 0)
-		//Debug.Log("Error = " + count);
-		//throw new Exception("Cannot build because you have compile errors!");
+		if (count > 0) {
+			Debug.Log("Error = " + count);
+
+			//start getting entries
+			var startGettingEntries = logEntries.GetMethod("StartGettingEntries");
+			var totalRow = startGettingEntries.Invoke(new object(), null);
+			Debug.Log("TotalRow: " + totalRow);
+
+
+
+//			//get 2 first line
+//			var getFirst2Line = logEntries.GetMethod("GetFirstTwoLinesEntryTextAndModeInternal");
+//
+//			int row = 0;
+//			int mask = 0;
+//			string outString = (string) null;
+//			object[] arguments = new object[] { row, mask, outString };
+//
+//			getFirst2Line.Invoke(new object(), arguments);
+//
+//			Debug.Log("row: " + arguments[0]);
+//			Debug.Log("mask: " + arguments[1]);
+//			Debug.Log("string: " + arguments[2]);
+
+
+
+			//get intry enternal
+			var getEntryInternal = logEntries.GetMethod("GetEntryInternal");
+
+			Type logEntry = assembly.GetType("UnityEditorInternal.LogEntry");
+
+			object entry = Activator.CreateInstance(logEntry);
+
+			object[] arguments = new object[] { 0, entry };
+			getEntryInternal.Invoke(new object(), arguments);
+
+			string json = Encoder.Encode(entry);
+			LogEntry myEntry = Decoder.Decode(json).Make<LogEntry>();
+			Debug.Log(myEntry.condition);
+
+
+
+
+			//finish getting entries
+			var endGettingEntries = logEntries.GetMethod("EndGettingEntries");
+			endGettingEntries.Invoke(new object(), null);
+		}
 	}
 
 }
