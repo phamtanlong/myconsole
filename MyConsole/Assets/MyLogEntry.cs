@@ -1,5 +1,5 @@
 ﻿
-public class LogEntry
+public class MyLogEntry
 {
 	public string condition;
 	public int errorNum;

@@ -3,6 +3,10 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
 using System.Linq;
+using System.Reflection;
+using System;
+using Encoder = TinyJSON.Encoder;
+using Decoder = TinyJSON.Decoder;
 
 [CreateAssetMenu(fileName = "ConsoleAsset", menuName = "Tools/Create Console Asset", order = 1)]
 [System.Serializable]
@@ -70,6 +74,131 @@ public class MyConsoleAsset : ScriptableObject {
 
 		countError -= count;
 	}
+
+	/// <summary>
+	/// Clears the log and return list of compile error
+	/// </summary>
+	/// <returns>The log.</returns>
+	static List<MyLogEntry> ClearLogEntries()
+	{
+		List<MyLogEntry> result = new List<MyLogEntry>();
+
+		MethodClear.Invoke(new object(), null);
+
+		int count = (int)MethodGetCount.Invoke(new object(), null);
+		if (count > 0) {
+			//start getting entries
+			var totalRow = (int)MethodStartGettingEntries.Invoke(new object(), null);
+			//Debug.Log("TotalRow: " + totalRow);
+
+			for (int i = 0; i < totalRow; ++i) {
+				//get intry enternal
+				object entry = Activator.CreateInstance(LogEntry);
+
+				object[] arguments = new object[] { i, entry };
+				MethodGetEntryInternal.Invoke(new object(), arguments);
+
+				string json = Encoder.Encode(entry);
+				MyLogEntry myEntry = Decoder.Decode(json).Make<MyLogEntry>();
+				//Debug.Log(myEntry.condition);
+				result.Add(myEntry);
+			}
+
+//			Debug.Log("TotalRow: " + totalRow);
+//			foreach (var item in result) {
+//				Debug.Log(item.condition);
+//			}
+
+			//finish getting entries
+			MethodEndGettingEntries.Invoke(new object(), null);
+		}
+
+		return result;
+	}
+
+	#region Cache Reflection
+
+	protected static MethodInfo _methodGetEntryInternal;
+	public static MethodInfo MethodGetEntryInternal {
+		get {
+			if (_methodGetEntryInternal == null) {
+				_methodGetEntryInternal = LogEntries.GetMethod("GetEntryInternal");
+			}
+			return _methodGetEntryInternal;
+		}
+	}
+
+	protected static MethodInfo _methodStartGettingEntries;
+	public static MethodInfo MethodStartGettingEntries {
+		get {
+			if (_methodStartGettingEntries == null) {
+				_methodStartGettingEntries = LogEntries.GetMethod("StartGettingEntries");
+			}
+			return _methodStartGettingEntries;
+		}
+	}
+
+	protected static MethodInfo _methodEndGettingEntries;
+	public static MethodInfo MethodEndGettingEntries {
+		get {
+			if (_methodEndGettingEntries == null) {
+				_methodEndGettingEntries = LogEntries.GetMethod("EndGettingEntries");
+			}
+			return _methodEndGettingEntries;
+		}
+	}
+
+	protected static MethodInfo _methodGetCount;
+	public static MethodInfo MethodGetCount {
+		get {
+			if (_methodGetCount == null) {
+				_methodGetCount = LogEntries.GetMethod("GetCount");
+			}
+			return _methodGetCount;
+		}
+	}
+
+	protected static MethodInfo _methodClear;
+	public static MethodInfo MethodClear {
+		get {
+			if (_methodClear == null) {
+				_methodClear = LogEntries.GetMethod("Clear");
+			}
+			return _methodClear;
+		}
+	}
+
+	protected static Assembly _assemblyEditor;
+	public static Assembly AssemblyEditor {
+		get {
+			if (_assemblyEditor == null) {
+				_assemblyEditor = Assembly.GetAssembly(typeof(SceneView));
+			}
+			return _assemblyEditor;
+		}
+	}
+
+	protected static Type _logEntries;
+	public static Type LogEntries {
+		get {
+			if (_logEntries == null) {
+				_logEntries = AssemblyEditor.GetType("UnityEditorInternal.LogEntries");
+			}
+			return _logEntries;
+		}
+	}
+
+	protected static Type _logEntry;
+	public static Type LogEntry {
+		get {
+			if (_logEntry == null) {
+				_logEntry = AssemblyEditor.GetType("UnityEditorInternal.LogEntry");
+			}
+			return _logEntry;
+		}
+	}
+
+	#endregion
 }
 
 [System.Serializable]

@@ -323,7 +323,7 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 		//clear on play
 		if (EditorApplication.isPlayingOrWillChangePlaymode) {
 			if (!EditorApplication.isPlaying) {
-				Clear();
+				ClearData();
 			}
 		}
 	}
@@ -332,11 +332,6 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 	{
 		//open file in script editor
 		OpenCallStack(log.callstack);
-	}
-
-	void Clear () {
-		logAsset.removeAll();
-		PrepareData();
 	}
 
 	#endregion //Process
@@ -649,7 +644,7 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 		{
 			//clear log
 			if (GUILayout.Button("Clear", EditorStyles.toolbarButton)) {
-				Clear();
+				ClearData();
 			}
 
 			GUILayout.Space(6);
