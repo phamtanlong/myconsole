@@ -39,6 +39,16 @@ public class MyConsoleAsset : ScriptableObject {
 		countLog = logs.Count(x => x.type == LogType.Log);
 		countWarn = logs.Count(x => x.type == LogType.Warning);
 		countError = logs.Count - countLog - countWarn;
+
+		if (countLog + countWarn + countError == 0) {
+			visiableLogs = new List<Log>();
+			arrLogContents = new string[0];
+			arrLogIcons = new Texture[0];
+			arrLogCounts = new string[0];
+			arrLogTimes = new string[0];
+			arrLogFrames = new string[0];
+			arrLogFiles = new string[0];
+		}
 	}
 
 	public bool containsCompileErrorLog (string condition) {
@@ -200,6 +210,19 @@ public class MyConsoleAsset : ScriptableObject {
 			return _logEntry;
 		}
 	}
+
+	#endregion
+
+	#region Data for UI
+
+	//list log lines
+	public List<Log> visiableLogs = new List<Log>();
+	public string[] arrLogContents;
+	public Texture[] arrLogIcons;
+	public string[] arrLogCounts;
+	public string[] arrLogTimes;
+	public string[] arrLogFrames;
+	public string[] arrLogFiles;
 
 	#endregion
 }

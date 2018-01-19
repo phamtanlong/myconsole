@@ -106,13 +106,13 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 	string keyIgnore = string.Empty;
 
 	//list log lines
-	List<Log> visiableLogs = new List<Log>();
-	string[] arrLogContents;
-	Texture[] arrLogIcons;
-	string[] arrLogCounts;
-	string[] arrLogTimes;
-	string[] arrLogFrames;
-	string[] arrLogFiles;
+	//List<Log> logAsset.visiableLogs = new List<Log>();
+	//string[] logAsset.arrLogContents;
+	//Texture[] logAsset.arrLogIcons;
+	//string[] logAsset.arrLogCounts;
+	//string[] logAsset.arrLogTimes;
+	//string[] logAsset.arrLogFrames;
+	//string[] logAsset.arrLogFiles;
 
 	float columnCollapseWidth;
 	float columnTimeWidth;
@@ -144,7 +144,7 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 	}
 
 	public bool HasScrollBar () {
-		float calculateH = visiableLogs.Count * LogHeight;
+		float calculateH = logAsset.visiableLogs.Count * LogHeight;
 		float logPanelH = GetLogPanelHeight();
 		if (calculateH > logPanelH)
 			return true;
@@ -312,7 +312,7 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 		if (HasScrollBar()) {
 			float scrollHeight = GetLogPanelHeight();
 			float numberVisiableRow = scrollHeight / LogHeight;
-			float maxTopLine = visiableLogs.Count - numberVisiableRow;
+			float maxTopLine = logAsset.visiableLogs.Count - numberVisiableRow;
 			float currentTopLine = scrollViewLogs.y / LogHeight;
 			if (maxTopLine - currentTopLine <= 1.1f) {
 				scrollViewLogs.y = maxTopLine * LogHeight;
@@ -385,7 +385,7 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 					}
 
 					if (Event.current.keyCode == KeyCode.DownArrow) { //move down
-						if (selectedLogLine < visiableLogs.Count - 1) {
+						if (selectedLogLine < logAsset.visiableLogs.Count - 1) {
 							selectedLogLine = selectedLogLine + 1;
 							isMoveDown = true;
 						}
@@ -491,7 +491,7 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 		string[] keySearchLowers = keySearch.ToLower().Split(Splitter).Where(x => x.Length > 0).ToArray();
 		string[] keyIgnoreLowers = keyIgnore.ToLower().Split(Splitter).Where(x => x.Length > 0).ToArray();
 
-		visiableLogs = new List<Log>();
+		logAsset.visiableLogs = new List<Log>();
 
 		var listContents = new List<string>();
 		var listIcons = new List<Texture>();
@@ -561,7 +561,7 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 			}
 
 			if (ok) {
-				visiableLogs.Add(log);
+				logAsset.visiableLogs.Add(log);
 
 				listContents.Add(log.content);
 
@@ -601,14 +601,14 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 		columnCollapseWidth = Math.Max(columnCollapseWidth, MincolumnCollapseWidth);
 
 		//list to array
-		arrLogContents = listContents.ToArray();
-		arrLogIcons = listIcons.ToArray();
-		arrLogTimes = listTimes.ToArray();
-		arrLogFrames = listFrames.ToArray();
-		arrLogFiles = listFiles.ToArray();
+		logAsset.arrLogContents = listContents.ToArray();
+		logAsset.arrLogIcons = listIcons.ToArray();
+		logAsset.arrLogTimes = listTimes.ToArray();
+		logAsset.arrLogFrames = listFrames.ToArray();
+		logAsset.arrLogFiles = listFiles.ToArray();
 
 		//count collapse
-		arrLogCounts = visiableLogs.Select(x => x.number.ToString()).ToArray();
+		logAsset.arrLogCounts = logAsset.visiableLogs.Select(x => x.number.ToString()).ToArray();
 	}
 
 	void OnGUI()
@@ -620,14 +620,14 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 
 		GUILayout.BeginVertical();
 		{
-			DrawLogList(visiableLogs);
+			DrawLogList(logAsset.visiableLogs);
 
 			ResizeScrollView();
 
 			GUILayout.Space(ToolbarSpaceScrollView2);
 			GUILayout.Space(ToolbarSpaceScrollView2);
 
-			DrawDetail(visiableLogs);
+			DrawDetail(logAsset.visiableLogs);
 		}
 		GUILayout.EndVertical();
 
@@ -806,36 +806,36 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 
 			if (logAsset.collapse) {
 				styleLog.fixedWidth = columnCollapseWidth;
-				selectedLogLine = GUILayout.SelectionGrid(selectedLogLine, arrLogCounts, 1, styleLog);
+				selectedLogLine = GUILayout.SelectionGrid(selectedLogLine, logAsset.arrLogCounts, 1, styleLog);
 				contentWidth -= columnCollapseWidth;
 			}
 
-			selectedLogLine = GUILayout.SelectionGrid(selectedLogLine, arrLogIcons, 1, styleLogIcon);
+			selectedLogLine = GUILayout.SelectionGrid(selectedLogLine, logAsset.arrLogIcons, 1, styleLogIcon);
 
 			if (logAsset.columnTime) {
 				styleLog.normal.textColor = new Color32(122, 51, 0, 255);
 				styleLog.fixedWidth = columnTimeWidth;
-				selectedLogLine = GUILayout.SelectionGrid(selectedLogLine, arrLogTimes, 1, styleLog);
+				selectedLogLine = GUILayout.SelectionGrid(selectedLogLine, logAsset.arrLogTimes, 1, styleLog);
 				contentWidth -= columnTimeWidth;
 			}
 
 			if (logAsset.columnFrame) {
 				styleLog.normal.textColor = Color.blue;
 				styleLog.fixedWidth = columnFrameWidth;
-				selectedLogLine = GUILayout.SelectionGrid(selectedLogLine, arrLogFrames, 1, styleLog);
+				selectedLogLine = GUILayout.SelectionGrid(selectedLogLine, logAsset.arrLogFrames, 1, styleLog);
 				contentWidth -= columnFrameWidth;
 			}
 
 			if (logAsset.columnFile) {
 				styleLog.normal.textColor = new Color32(98, 0, 173, 255);
 				styleLog.fixedWidth = columnFileWidth;
-				selectedLogLine = GUILayout.SelectionGrid(selectedLogLine, arrLogFiles, 1, styleLog);
+				selectedLogLine = GUILayout.SelectionGrid(selectedLogLine, logAsset.arrLogFiles, 1, styleLog);
 				contentWidth -= columnFileWidth;
 			}
 
 			styleLog.normal.textColor = Color.black;
 			styleLog.fixedWidth = contentWidth;
-			selectedLogLine = GUILayout.SelectionGrid(selectedLogLine, arrLogContents, 1, styleLog);
+			selectedLogLine = GUILayout.SelectionGrid(selectedLogLine, logAsset.arrLogContents, 1, styleLog);
 
 		}
 		GUILayout.EndHorizontal();
