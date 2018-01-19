@@ -144,7 +144,7 @@ public class Test : MonoBehaviour {
 
 			Debug.Log("TotalRow: " + totalRow);
 			foreach (var item in result) {
-				Debug.Log(item.condition);
+				Debug.Log(item.file + ", " + item.line);
 			}
 			
 			//finish getting entries

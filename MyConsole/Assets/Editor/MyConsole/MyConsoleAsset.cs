@@ -60,19 +60,22 @@ public class MyConsoleAsset : ScriptableObject {
 	}
 
 	public void removeAll () {
+		
+		var list = ClearLogEntries();
+
+		List<Log> removeLogs = new List<Log>();
+		foreach (var log in compileErrorLogs) {
+			var contains = list.Any(x => log.callstack.path.Equals(x.file) && log.callstack.lineNumber == x.line);
+			if (!contains)
+				removeLogs.Add(log);
+		}
+
+		compileErrorLogs.RemoveAll(removeLogs.Contains);
+
 		logs.Clear();
-		compileErrorLogs.Clear();
+		logs.AddRange(compileErrorLogs);
 
-		countLog = 0;
-		countWarn = 0;
-		countError = 0;
-	}
-
-	public void removeAllCompileError () {
-		int count = logs.RemoveAll(x => x.isCompileError);
-		compileErrorLogs.Clear();
-
-		countError -= count;
+		updateCount();
 	}
 
 	/// <summary>

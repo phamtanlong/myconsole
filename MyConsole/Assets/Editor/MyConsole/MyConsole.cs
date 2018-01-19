@@ -197,8 +197,9 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 
 	[UnityEditor.Callbacks.DidReloadScripts]
 	public static void OnScriptsReloaded() {
-		//var logAsset = MyConsole.LoadOrCreateAsset();
-		//logAsset.removeAllCompileError(); //TODO: check remove compile error here
+		var logAsset = MyConsole.LoadOrCreateAsset();
+		logAsset.removeAll();
+
 		if (instance != null) {
 			instance.RegisterHandlers();
 			instance.PrepareData();
@@ -262,9 +263,13 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 	{
 		bool isCompileError = condition.Contains("): error CS");
 		if (isCompileError) {
+			//clear all without compile error
+			ClearData();
+
+			//do not duplicate 1 compile error
 			var hadIt = logAsset.containsCompileErrorLog(condition);
 			if (hadIt)
-				return; //do not duplicate 1 compile error
+				return;
 		}
 
 		Log log = new Log {
