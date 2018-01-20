@@ -39,16 +39,6 @@ public class MyConsoleAsset : ScriptableObject {
 		countLog = logs.Count(x => x.type == LogType.Log);
 		countWarn = logs.Count(x => x.type == LogType.Warning);
 		countError = logs.Count - countLog - countWarn;
-		
-//		if (countLog + countWarn + countError == 0) {
-//			visiableLogs = new List<Log>();
-//			arrLogContents = new string[0];
-//			arrLogIcons = new Texture[0];
-//			arrLogCounts = new string[0];
-//			arrLogTimes = new string[0];
-//			arrLogFrames = new string[0];
-//			arrLogFiles = new string[0];
-//		}
 	}
 
 	public int compileErrorCount {
@@ -97,7 +87,6 @@ public class MyConsoleAsset : ScriptableObject {
 	/// <summary>
 	/// Clears the log and return list of compile error
 	/// </summary>
-	/// <returns>The log.</returns>
 	static List<MyLogEntry> ClearLogEntries()
 	{
 		List<MyLogEntry> result = new List<MyLogEntry>();
@@ -108,7 +97,6 @@ public class MyConsoleAsset : ScriptableObject {
 		if (count > 0) {
 			//start getting entries
 			var totalRow = (int)MethodStartGettingEntries.Invoke(new object(), null);
-			//Debug.Log("TotalRow: " + totalRow);
 
 			for (int i = 0; i < totalRow; ++i) {
 				//get intry enternal
@@ -119,14 +107,8 @@ public class MyConsoleAsset : ScriptableObject {
 
 				string json = Encoder.Encode(entry);
 				MyLogEntry myEntry = Decoder.Decode(json).Make<MyLogEntry>();
-				//Debug.Log(myEntry.condition);
 				result.Add(myEntry);
 			}
-
-//			Debug.Log("TotalRow: " + totalRow);
-//			foreach (var item in result) {
-//				Debug.Log(item.condition);
-//			}
 
 			//finish getting entries
 			MethodEndGettingEntries.Invoke(new object(), null);
@@ -216,19 +198,6 @@ public class MyConsoleAsset : ScriptableObject {
 			return _logEntry;
 		}
 	}
-
-	#endregion
-
-	#region Data for UI
-
-	//list log lines
-	public List<Log> visiableLogs = new List<Log>();
-	public string[] arrLogContents;
-	public Texture[] arrLogIcons;
-	public string[] arrLogCounts;
-	public string[] arrLogTimes;
-	public string[] arrLogFrames;
-	public string[] arrLogFiles;
 
 	#endregion
 }

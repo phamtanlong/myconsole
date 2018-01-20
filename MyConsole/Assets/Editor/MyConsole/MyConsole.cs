@@ -2,23 +2,32 @@
 using UnityEditor;
 using System.Collections.Generic;
 using System.Linq;
-//using System.IO;
 using System;
 using Object = UnityEngine.Object;
-//using System.Text.RegularExpressions;
 
 public class MyConsole : EditorWindow, IHasCustomMenu
 {
-	public static MyConsole instance;
+	#region Instance tracker
+
+	protected static MyConsole _instance = null;
+	public static MyConsole instance {
+		get {
+			if (_instance == null) {
+				MyConsole[] windows = Resources.FindObjectsOfTypeAll<MyConsole>();
+				if(windows != null && windows.Length > 0) {
+					_instance = EditorWindow.GetWindow<MyConsole>("MyConsole", false);
+				}
+			}
+			return _instance;
+		}
+	}
+
+	#endregion
 
 	#region IHasCustomMenu implementation
 
 	public void AddItemsToMenu(GenericMenu menu)
 	{
-		menu.AddItem(new GUIContent("Reload Resources"), false, ClearCacheResources);
-
-		menu.AddSeparator(string.Empty);
-
 		// Column settings
 
 		menu.AddItem(new GUIContent("Column File"), logAsset.columnFile, () => {
@@ -76,27 +85,9 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 
 	#endregion
 
-	[MenuItem("Window/MyConsole")]
-	static void ShowMe()
-	{
-		MyConsole window = (MyConsole)EditorWindow.GetWindow(typeof(MyConsole));
-		window.Show();
-		instance = window;
-	}
-
-	const string assetPath = "Assets/Editor/MyConsole/Resources/ConsoleAsset.asset";
-	static bool isInited = false;
-
-	MyConsoleAsset _logAsset;
 	MyConsoleAsset logAsset {
 		get {
-			if (_logAsset == null) {
-				_logAsset = LoadOrCreateAsset();
-			}
-			return _logAsset;
-		}
-		set {
-			_logAsset = value;
+			return MyConsoleService.logAsset;
 		}
 	}
 
@@ -106,13 +97,13 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 	string keyIgnore = string.Empty;
 
 	//list log lines
-	//List<Log> logAsset.visiableLogs = new List<Log>();
-	//string[] logAsset.arrLogContents;
-	//Texture[] logAsset.arrLogIcons;
-	//string[] logAsset.arrLogCounts;
-	//string[] logAsset.arrLogTimes;
-	//string[] logAsset.arrLogFrames;
-	//string[] logAsset.arrLogFiles;
+	protected List<Log> visiableLogs = new List<Log>();
+	protected string[] arrLogContents;
+	protected Texture[] arrLogIcons;
+	protected string[] arrLogCounts;
+	protected string[] arrLogTimes;
+	protected string[] arrLogFrames;
+	protected string[] arrLogFiles;
 
 	float columnCollapseWidth;
 	float columnTimeWidth;
@@ -133,7 +124,6 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 
 	bool isMovingListLog = false;
 	bool isMovingListDetail = false;
-	string mylog = string.Empty;
 
 	public float GetLogPanelHeight () {
 		return topPartHeight - ToolbarHeight - TitleRowHeight - ToolbarSpaceScrollView;
@@ -144,7 +134,7 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 	}
 
 	public bool HasScrollBar () {
-		float calculateH = logAsset.visiableLogs.Count * LogHeight;
+		float calculateH = visiableLogs.Count * LogHeight;
 		float logPanelH = GetLogPanelHeight();
 		if (calculateH > logPanelH)
 			return true;
@@ -154,7 +144,7 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 
 	#region Lifecycle
 
-	void InitFirstTime () {
+	void CalculateWindowSize () {
 		topPartHeight = position.height / 2;
 		columnCollapseWidth = MincolumnCollapseWidth;
 		columnTimeWidth = MincolumnTimeWidth;
@@ -164,45 +154,15 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 
 	//start here
 	void Awake () {
-		InitFirstTime();
+		CalculateWindowSize();
 		ClearData();
-		Init();
-	}
-
-	void OnDestroy () {
-		UnRegisterHandlers();
-		ClearData();
-	}
-
-	void OnProjectChange () {
 		RegisterHandlers();
-	}
-
-	void OnFocus () {
-		RegisterHandlers();
-	}
-
-	void OnLostFocus () {
-		RegisterHandlers();
-	}
-
-	void Update () {
-		if (logAsset == null || isInited == false) {
-			//when reimport code or something change
-			//may be some data lost
-			//so we need to re-init, register handlers, ...
-			Init();
-		}
 	}
 
 	[UnityEditor.Callbacks.DidReloadScripts]
 	public static void OnScriptsReloaded() {
-		var logAsset = MyConsole.LoadOrCreateAsset();
-		//logAsset.removeAll();
-
-		if (instance != null) {
-			instance.RegisterHandlers();
-			instance.PrepareData();
+		if (MyConsole.instance != null) {
+			MyConsole.instance.PrepareData();
 		}
 	}
 
@@ -210,56 +170,23 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 
 	#region Process
 
-	void ClearCacheResources () {
-//		_errorIcon = null;
-//		_logAsset = null;
-//		_logIcon = null;
-//		_styleCollapseNumber = null;
-//		_styleDetail = null;
-		_styleLog = null;
-//		_styleLogIcon = null;
-//		_styleTitle = null;
-//		_texLogActive = null;
-//		_texLogBlack = null;
-//		_texLogWhite = null;
-//		_warnIcon = null;
-	}
-
 	void ClearData () {
 		logAsset.removeAll();
 		PrepareData();
 	}
 
-	public static MyConsoleAsset LoadOrCreateAsset () {
-		var asset = AssetDatabase.LoadAssetAtPath(assetPath, typeof(MyConsoleAsset)) as MyConsoleAsset;
-
-		if (asset == null) {
-			asset = ScriptableObject.CreateInstance<MyConsoleAsset>();
-			AssetDatabase.CreateAsset(asset, assetPath);
-			AssetDatabase.SaveAssets();
-		}
-
-		return asset;
-	}
-
-	void RegisterHandlers () {
+	public void RegisterHandlers () {
 		UnRegisterHandlers();
 		Application.logMessageReceivedThreaded += LogHandler;
 		EditorApplication.playmodeStateChanged += PlayModeChange;
 	}
 
-	void UnRegisterHandlers () {
+	public void UnRegisterHandlers () {
 		Application.logMessageReceivedThreaded -= LogHandler;
 		EditorApplication.playmodeStateChanged -= PlayModeChange;
 	}
 
-	void Init () {
-		LoadOrCreateAsset();
-		RegisterHandlers();
-		isInited = true;
-	}
-
-	void LogHandler(string condition, string stackTrace, LogType type)
+	public void LogHandler(string condition, string stackTrace, LogType type)
 	{
 		bool isCompileError = condition.Contains("): error CS");
 		if (isCompileError) {
@@ -314,7 +241,7 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 		if (HasScrollBar()) {
 			float scrollHeight = GetLogPanelHeight();
 			float numberVisiableRow = scrollHeight / LogHeight;
-			float maxTopLine = logAsset.visiableLogs.Count - numberVisiableRow;
+			float maxTopLine = visiableLogs.Count - numberVisiableRow;
 			float currentTopLine = scrollViewLogs.y / LogHeight;
 			if (maxTopLine - currentTopLine <= 1.1f) {
 				scrollViewLogs.y = maxTopLine * LogHeight;
@@ -322,11 +249,8 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 		}
 	}
 
-	void PlayModeChange()
+	public void PlayModeChange()
 	{
-		//reload resource
-		ClearCacheResources();
-
 		//clear on play
 		if (EditorApplication.isPlayingOrWillChangePlaymode) {
 			if (!EditorApplication.isPlaying) {
@@ -387,7 +311,7 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 					}
 
 					if (Event.current.keyCode == KeyCode.DownArrow) { //move down
-						if (selectedLogLine < logAsset.visiableLogs.Count - 1) {
+						if (selectedLogLine < visiableLogs.Count - 1) {
 							selectedLogLine = selectedLogLine + 1;
 							isMoveDown = true;
 						}
@@ -493,7 +417,7 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 		string[] keySearchLowers = keySearch.ToLower().Split(Splitter).Where(x => x.Length > 0).ToArray();
 		string[] keyIgnoreLowers = keyIgnore.ToLower().Split(Splitter).Where(x => x.Length > 0).ToArray();
 
-		logAsset.visiableLogs = new List<Log>();
+		visiableLogs = new List<Log>();
 
 		var listContents = new List<string>();
 		var listIcons = new List<Texture>();
@@ -563,7 +487,7 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 			}
 
 			if (ok) {
-				logAsset.visiableLogs.Add(log);
+				visiableLogs.Add(log);
 
 				listContents.Add(log.content);
 
@@ -603,14 +527,14 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 		columnCollapseWidth = Math.Max(columnCollapseWidth, MincolumnCollapseWidth);
 
 		//list to array
-		logAsset.arrLogContents = listContents.ToArray();
-		logAsset.arrLogIcons = listIcons.ToArray();
-		logAsset.arrLogTimes = listTimes.ToArray();
-		logAsset.arrLogFrames = listFrames.ToArray();
-		logAsset.arrLogFiles = listFiles.ToArray();
+		arrLogContents = listContents.ToArray();
+		arrLogIcons = listIcons.ToArray();
+		arrLogTimes = listTimes.ToArray();
+		arrLogFrames = listFrames.ToArray();
+		arrLogFiles = listFiles.ToArray();
 
 		//count collapse
-		logAsset.arrLogCounts = logAsset.visiableLogs.Select(x => x.number.ToString()).ToArray();
+		arrLogCounts = visiableLogs.Select(x => x.number.ToString()).ToArray();
 	}
 
 	void OnGUI()
@@ -622,14 +546,14 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 
 		GUILayout.BeginVertical();
 		{
-			DrawLogList(logAsset.visiableLogs);
+			DrawLogList(visiableLogs);
 
 			ResizeScrollView();
 
 			GUILayout.Space(ToolbarSpaceScrollView2);
 			GUILayout.Space(ToolbarSpaceScrollView2);
 
-			DrawDetail(logAsset.visiableLogs);
+			DrawDetail(visiableLogs);
 		}
 		GUILayout.EndVertical();
 
@@ -659,17 +583,17 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 			#region Toggle: Collapse, Clear on Play, Error Pause
 			{
 				//collapse toggle
-				EditorGUI.BeginChangeCheck();
-				logAsset.collapse = GUILayout.Toggle(logAsset.collapse, "Collapse", EditorStyles.toolbarButton);
-				bool changeCollapse = EditorGUI.EndChangeCheck();
-				if (changeCollapse)
-					PrepareData();
+				//EditorGUI.BeginChangeCheck();
+				//logAsset.collapse = GUILayout.Toggle(logAsset.collapse, "Collapse", EditorStyles.toolbarButton);
+				//bool changeCollapse = EditorGUI.EndChangeCheck();
+				//if (changeCollapse)
+				//	PrepareData();
 
 				//clear on play toggle
 				logAsset.clearOnPlay = GUILayout.Toggle(logAsset.clearOnPlay, "Clear on Play", EditorStyles.toolbarButton);
 
 				//error pause toggle
-				logAsset.errorPause = GUILayout.Toggle(logAsset.errorPause, "Error Pause", EditorStyles.toolbarButton);
+				//logAsset.errorPause = GUILayout.Toggle(logAsset.errorPause, "Error Pause", EditorStyles.toolbarButton);
 			}
 			#endregion
 
@@ -679,7 +603,7 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 				var cancelToolbarStyle = GUI.skin.FindStyle("ToolbarSeachCancelButton");
 				GUILayout.Label("+");
 				var lastSearchKey = keySearch;
-				keySearch = GUILayout.TextField(keySearch, searchFieldToolbarStyle, GUILayout.Width(100));
+				keySearch = GUILayout.TextField(keySearch, searchFieldToolbarStyle, GUILayout.Width(80));
 
 				if (lastSearchKey != keySearch) {
 					if (keySearch.EndsWith("\n")) {
@@ -697,7 +621,7 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 				//ignore
 				GUILayout.Label("-");
 				var lastIgnoreKey = keyIgnore;
-				keyIgnore = GUILayout.TextField(keyIgnore, searchFieldToolbarStyle, GUILayout.Width(100));
+				keyIgnore = GUILayout.TextField(keyIgnore, searchFieldToolbarStyle, GUILayout.Width(80));
 
 				if (lastIgnoreKey != keyIgnore) {
 					if (keyIgnore.EndsWith("\n")) {
@@ -808,36 +732,36 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 
 			if (logAsset.collapse) {
 				styleLog.fixedWidth = columnCollapseWidth;
-				selectedLogLine = GUILayout.SelectionGrid(selectedLogLine, logAsset.arrLogCounts, 1, styleLog);
+				selectedLogLine = GUILayout.SelectionGrid(selectedLogLine, arrLogCounts, 1, styleLog);
 				contentWidth -= columnCollapseWidth;
 			}
 
-			selectedLogLine = GUILayout.SelectionGrid(selectedLogLine, logAsset.arrLogIcons, 1, styleLogIcon);
+			selectedLogLine = GUILayout.SelectionGrid(selectedLogLine, arrLogIcons, 1, styleLogIcon);
 
 			if (logAsset.columnTime) {
 				styleLog.normal.textColor = new Color32(122, 51, 0, 255);
 				styleLog.fixedWidth = columnTimeWidth;
-				selectedLogLine = GUILayout.SelectionGrid(selectedLogLine, logAsset.arrLogTimes, 1, styleLog);
+				selectedLogLine = GUILayout.SelectionGrid(selectedLogLine, arrLogTimes, 1, styleLog);
 				contentWidth -= columnTimeWidth;
 			}
 
 			if (logAsset.columnFrame) {
 				styleLog.normal.textColor = Color.blue;
 				styleLog.fixedWidth = columnFrameWidth;
-				selectedLogLine = GUILayout.SelectionGrid(selectedLogLine, logAsset.arrLogFrames, 1, styleLog);
+				selectedLogLine = GUILayout.SelectionGrid(selectedLogLine, arrLogFrames, 1, styleLog);
 				contentWidth -= columnFrameWidth;
 			}
 
 			if (logAsset.columnFile) {
 				styleLog.normal.textColor = new Color32(98, 0, 173, 255);
 				styleLog.fixedWidth = columnFileWidth;
-				selectedLogLine = GUILayout.SelectionGrid(selectedLogLine, logAsset.arrLogFiles, 1, styleLog);
+				selectedLogLine = GUILayout.SelectionGrid(selectedLogLine, arrLogFiles, 1, styleLog);
 				contentWidth -= columnFileWidth;
 			}
 
 			styleLog.normal.textColor = Color.black;
 			styleLog.fixedWidth = contentWidth;
-			selectedLogLine = GUILayout.SelectionGrid(selectedLogLine, logAsset.arrLogContents, 1, styleLog);
+			selectedLogLine = GUILayout.SelectionGrid(selectedLogLine, arrLogContents, 1, styleLog);
 
 		}
 		GUILayout.EndHorizontal();
@@ -917,9 +841,6 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 					}
 
 					clickedInLine = GUILayout.Button(detailLines[i], styleDetail);
-					//clickedInLine = 
-					//EditorGUILayout.SelectableLabel(detailLines[i]);//, styleDetail);
-
 
 					//line content here
 
@@ -952,17 +873,6 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 		GUILayout.EndScrollView();
 	}
 
-	void ShowContextMenuDetail (string line) {
-		CallStack callStack = LineToCallStack(line);
-
-		GenericMenu menu = new GenericMenu();
-		menu.AddItem(new GUIContent("Copy"), false, () => {
-			mylog = "copy " + line;
-		});
-
-		menu.ShowAsContext();
-	}
-
 	#endregion //Draw
 
 	#region Resizable panel
@@ -976,7 +886,7 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 		cursorChangeRect = new Rect(0, topPartHeight, this.position.width, SplitHeight);
 		cursorChangeRectDraw = new Rect(0, topPartHeight, this.position.width, 2);
 
-		GUI.DrawTexture(cursorChangeRectDraw, texSeperator);//EditorGUIUtility.whiteTexture);
+		GUI.DrawTexture(cursorChangeRectDraw, texSeperator);
 
 		EditorGUIUtility.AddCursorRect(cursorChangeRect, MouseCursor.ResizeVertical);
 
@@ -1013,9 +923,7 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 	const float MincolumnFileWidth = 70;
 
 	const float FontWidth = 6.2f;
-	const int ToolbarFontSize = 9;
 	const float DoubleClickTime = 0.3f;
-	const float ToolbarButtonWidth = 35;
 	const float DetailLineHeight = 20;
 	const float IconLogWidth = 26;
 	const float LogHeight = 33;
@@ -1035,9 +943,7 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 	static public Texture logIcon {
 		get {
 			if (_logIcon == null) {
-				//_logIcon = Resources.Load("log") as Texture;
 				_logIcon = EditorGUIUtility.Load("console.infoicon.sml") as Texture;
-				//EditorGUIUtility.Load("console.infoicon") as Texture;
 			}
 			return _logIcon;
 		}
@@ -1047,7 +953,6 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 	static public Texture warnIcon {
 		get {
 			if (_warnIcon == null) {
-				//_warnIcon = Resources.Load("warn") as Texture;
 				_warnIcon = EditorGUIUtility.Load("console.warnicon.sml") as Texture;
 			}
 			return _warnIcon;
@@ -1058,7 +963,6 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 	static public Texture errorIcon {
 		get {
 			if (_errorIcon == null) {
-				//_errorIcon = Resources.Load("error") as Texture;
 				_errorIcon = EditorGUIUtility.Load("console.erroricon.sml") as Texture;
 			}
 			return _errorIcon;
@@ -1069,7 +973,6 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 	static public Texture errorIconInactive {
 		get {
 			if (_errorIconInactive == null) {
-				//_errorIcon = Resources.Load("error") as Texture;
 				_errorIconInactive = EditorGUIUtility.Load("console.erroricon.inactive.sml") as Texture;
 			}
 			return _errorIconInactive;
@@ -1297,9 +1200,7 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 				path = str,
 				lineNumber = lineNumber
 			};
-		} catch {
-			//EditorUtility.DisplayDialog("Can not parse line", e.ToString(), "Ok");
-		}
+		} catch {}
 
 		return null;
 	}
