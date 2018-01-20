@@ -159,6 +159,17 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 		RegisterHandlers();
 	}
 
+	void Update () {
+		Event e = Event.current;
+
+		if (e != null && e.type == EventType.KeyDown && e.command && e.keyCode == KeyCode.A)
+		{
+			var kbdCtrlId = GUIUtility.keyboardControl;
+			var t = GUIUtility.GetStateObject(typeof(TextEditor), kbdCtrlId) as TextEditor;
+			t.SelectAll();
+		}
+	}
+
 	[UnityEditor.Callbacks.DidReloadScripts]
 	public static void OnScriptsReloaded() {
 		if (MyConsole.instance != null) {
@@ -805,7 +816,22 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 
 			if (editingDetail) {
 				string text = currentLog.condition + "\n" + currentLog.stackTrace;
-				var newValue = GUILayout.TextArea(text);
+				GUIStyle style = new GUIStyle(EditorStyles.label);
+				style.fontSize = 11;
+				style.fontStyle = FontStyle.Normal;
+				style.margin = new RectOffset(0, 0, 0, 0);
+				style.padding = new RectOffset(2, 2, 2, 2);
+				style.wordWrap = true;
+				style.richText = true;
+
+				style.active.textColor = Color.black;
+				style.onActive.textColor = Color.black;
+
+				style.focused.textColor = Color.black;
+				style.onFocused.textColor = Color.black;
+
+				var newValue = EditorGUILayout.DelayedTextField(text, style, GUILayout.ExpandHeight(true));
+				
 				if (!newValue.Equals(text)) {
 					editingDetail = false;
 				}
