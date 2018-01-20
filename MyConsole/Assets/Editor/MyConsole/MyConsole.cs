@@ -198,7 +198,7 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 	[UnityEditor.Callbacks.DidReloadScripts]
 	public static void OnScriptsReloaded() {
 		var logAsset = MyConsole.LoadOrCreateAsset();
-		logAsset.removeAll();
+		//logAsset.removeAll();
 
 		if (instance != null) {
 			instance.RegisterHandlers();
@@ -270,6 +270,8 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 			var hadIt = logAsset.containsCompileErrorLog(condition);
 			if (hadIt)
 				return;
+		} else if (logAsset.compileErrorCount > 0) {
+			ClearData();
 		}
 
 		Log log = new Log {

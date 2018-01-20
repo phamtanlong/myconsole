@@ -39,15 +39,21 @@ public class MyConsoleAsset : ScriptableObject {
 		countLog = logs.Count(x => x.type == LogType.Log);
 		countWarn = logs.Count(x => x.type == LogType.Warning);
 		countError = logs.Count - countLog - countWarn;
+		
+//		if (countLog + countWarn + countError == 0) {
+//			visiableLogs = new List<Log>();
+//			arrLogContents = new string[0];
+//			arrLogIcons = new Texture[0];
+//			arrLogCounts = new string[0];
+//			arrLogTimes = new string[0];
+//			arrLogFrames = new string[0];
+//			arrLogFiles = new string[0];
+//		}
+	}
 
-		if (countLog + countWarn + countError == 0) {
-			visiableLogs = new List<Log>();
-			arrLogContents = new string[0];
-			arrLogIcons = new Texture[0];
-			arrLogCounts = new string[0];
-			arrLogTimes = new string[0];
-			arrLogFrames = new string[0];
-			arrLogFiles = new string[0];
+	public int compileErrorCount {
+		get {
+			return compileErrorLogs.Count;
 		}
 	}
 
