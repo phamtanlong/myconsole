@@ -173,7 +173,11 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 	[UnityEditor.Callbacks.DidReloadScripts]
 	public static void OnScriptsReloaded() {
 		if (MyConsole.instance != null) {
-			MyConsole.instance.PrepareData();
+			if (MyConsole.instance.logAsset.compileErrorCount > 0) {
+				MyConsole.instance.ClearData();
+			} else {
+				MyConsole.instance.PrepareData();
+			}
 		}
 	}
 
@@ -208,9 +212,10 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 			var hadIt = logAsset.containsCompileErrorLog(condition);
 			if (hadIt)
 				return;
-		} else if (logAsset.compileErrorCount > 0) {
-			ClearData();
 		}
+		//else if (logAsset.compileErrorCount > 0) {
+		//	ClearData();
+		//}
 
 		Log log = new Log {
 			condition = condition,

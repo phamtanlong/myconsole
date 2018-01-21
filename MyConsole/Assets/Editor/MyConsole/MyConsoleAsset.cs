@@ -5,8 +5,8 @@ using UnityEditor;
 using System.Linq;
 using System.Reflection;
 using System;
-using Encoder = TinyJSON.Encoder;
-using Decoder = TinyJSON.Decoder;
+//using Encoder = TinyJSON.Encoder;
+//using Decoder = TinyJSON.Decoder;
 
 //[CreateAssetMenu(fileName = "ConsoleAsset", menuName = "MyConsole/Create Console Asset", order = 1)]
 [System.Serializable]
@@ -105,9 +105,10 @@ public class MyConsoleAsset : ScriptableObject {
 				object[] arguments = new object[] { i, entry };
 				MethodGetEntryInternal.Invoke(new object(), arguments);
 
-				string json = Encoder.Encode(entry);
-				MyLogEntry myEntry = Decoder.Decode(json).Make<MyLogEntry>();
-				result.Add(myEntry);
+				string file = (string)LogEntryFile.GetValue(entry);
+				int line = (int)LogEntryLine.GetValue(entry);
+
+				result.Add(new MyLogEntry { file = file, line = line });
 			}
 
 			//finish getting entries
@@ -196,6 +197,26 @@ public class MyConsoleAsset : ScriptableObject {
 				_logEntry = AssemblyEditor.GetType("UnityEditorInternal.LogEntry");
 			}
 			return _logEntry;
+		}
+	}
+
+	protected static FieldInfo _logEntryFile;
+	public static FieldInfo LogEntryFile {
+		get {
+			if (_logEntryFile == null) {
+				_logEntryFile = LogEntry.GetField("file");
+			}
+			return _logEntryFile;
+		}
+	}
+
+	protected static FieldInfo _logEntryLine;
+	public static FieldInfo LogEntryLine {
+		get {
+			if (_logEntryLine == null) {
+				_logEntryLine = LogEntry.GetField("line");
+			}
+			return _logEntryLine;
 		}
 	}
 
