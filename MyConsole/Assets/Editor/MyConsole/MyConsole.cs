@@ -816,21 +816,7 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 
 			if (editingDetail) {
 				string text = currentLog.condition + "\n" + currentLog.stackTrace;
-				GUIStyle style = new GUIStyle(EditorStyles.label);
-				style.fontSize = 11;
-				style.fontStyle = FontStyle.Normal;
-				style.margin = new RectOffset(0, 0, 0, 0);
-				style.padding = new RectOffset(2, 2, 2, 2);
-				style.wordWrap = true;
-				style.richText = true;
-
-				style.active.textColor = Color.black;
-				style.onActive.textColor = Color.black;
-
-				style.focused.textColor = Color.black;
-				style.onFocused.textColor = Color.black;
-
-				var newValue = EditorGUILayout.DelayedTextField(text, style, GUILayout.ExpandHeight(true));
+				var newValue = EditorGUILayout.DelayedTextField(text, styleDetailText, GUILayout.ExpandHeight(true));
 				
 				if (!newValue.Equals(text)) {
 					editingDetail = false;
@@ -1002,6 +988,29 @@ public class MyConsole : EditorWindow, IHasCustomMenu
 				_errorIconInactive = EditorGUIUtility.Load("console.erroricon.inactive.sml") as Texture;
 			}
 			return _errorIconInactive;
+		}
+	}
+
+	static GUIStyle _styleDetailText;
+	static public GUIStyle styleDetailText {
+		get {
+			if (_styleDetailText == null) {
+				_styleDetailText = new GUIStyle(EditorStyles.label);
+				_styleDetailText.fontSize = 11;
+				_styleDetailText.fontStyle = FontStyle.Normal;
+				_styleDetailText.margin = new RectOffset(0, 0, 0, 0);
+				_styleDetailText.padding = new RectOffset(2, 2, 2, 2);
+				_styleDetailText.wordWrap = true;
+				_styleDetailText.richText = true;
+
+				_styleDetailText.active.textColor = Color.black;
+				_styleDetailText.onActive.textColor = Color.black;
+
+				_styleDetailText.focused.textColor = Color.black;
+				_styleDetailText.onFocused.textColor = Color.black;
+			}
+
+			return _styleDetailText;
 		}
 	}
 
