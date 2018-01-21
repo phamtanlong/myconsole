@@ -8,7 +8,7 @@ using System;
 using Encoder = TinyJSON.Encoder;
 using Decoder = TinyJSON.Decoder;
 
-[CreateAssetMenu(fileName = "ConsoleAsset", menuName = "Tools/Create Console Asset", order = 1)]
+//[CreateAssetMenu(fileName = "ConsoleAsset", menuName = "MyConsole/Create Console Asset", order = 1)]
 [System.Serializable]
 public class MyConsoleAsset : ScriptableObject {
 
