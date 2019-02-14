@@ -1,2 +1,2 @@
 # myconsole
-An custom console which some special features
+An custom console for Unity which some special features
